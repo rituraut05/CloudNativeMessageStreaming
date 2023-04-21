@@ -32,9 +32,9 @@ class BrokerClient {
     unique_ptr<BrokerServer::Stub> stub_;
 };
 
-class BrokerRaftServer final : public BrokerServer::Service {
+class BrokerGrpcServer final : public BrokerServer::Service {
   public:
-    explicit BrokerRaftServer() {}
+    explicit BrokerGrpcServer() {}
 };
 
 int main(int argc, char* argv[]) {

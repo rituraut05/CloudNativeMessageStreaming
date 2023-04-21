@@ -21,9 +21,9 @@ class GuruToBrokerClient {
     unique_ptr<GuruServer::Stub> stub_;
 };
 
-class GuruRaftServer final : public GuruServer::Service {
+class GuruGrpcServer final : public GuruServer::Service {
   public:
-    explicit GuruRaftServer() {}
+    explicit GuruGrpcServer() {}
 };
 
 int main(int argc, char* argv[]) {
