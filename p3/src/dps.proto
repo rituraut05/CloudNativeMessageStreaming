@@ -41,7 +41,7 @@ service GuruServer
 
   // Communication with brokers
   rpc SetLeader(SetLeaderRequest) returns (SetLeaderResponse) {}
-  rpc sendHeartbeat(HeartbeatRequest) returns (HeartbeatResponse) {}
+  rpc SendHeartbeat(HeartbeatRequest) returns (HeartbeatResponse) {}
 }
 
 message GetBrokerRequest { }
@@ -55,5 +55,10 @@ message AddTopicResponse { }
 
 message SetLeaderRequest { }
 message SetLeaderResponse { }
-message HeartbeatRequest { }
-message HeartbeatResponse { }
+message HeartbeatRequest {
+  uint32 serverid = 1;
+  uint32 clusterid = 2;
+}
+message HeartbeatResponse {
+  bool success = 1;
+}
