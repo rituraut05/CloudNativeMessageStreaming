@@ -39,6 +39,7 @@ target_link_libraries(hw_grpc_proto
   ${_GRPC_GRPCPP}
   ${_PROTOBUF_LIBPROTOBUF})
 
+add_subdirectory(third_party/leveldb)
 add_executable(publisher publisher.cc)
 target_link_libraries(publisher
   hw_grpc_proto
@@ -58,7 +59,8 @@ target_link_libraries(broker
   hw_grpc_proto
   ${_REFLECTION}
   ${_GRPC_GRPCPP}
-  ${_PROTOBUF_LIBPROTOBUF})
+  ${_PROTOBUF_LIBPROTOBUF}
+  leveldb)
 
 add_executable(guru guru.cc timer.cc)
 target_link_libraries(guru
