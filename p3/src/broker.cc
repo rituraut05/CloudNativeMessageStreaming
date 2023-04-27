@@ -4,6 +4,7 @@
 #include <thread>
 
 #include "timer.hh"
+#include "utils.hh"
 #include "dps.grpc.pb.h"
 
 using grpc::Channel;
