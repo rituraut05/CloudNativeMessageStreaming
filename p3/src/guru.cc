@@ -23,6 +23,9 @@ using dps::BrokerServer;
 using dps::GuruServer;
 using dps::HeartbeatRequest;
 using dps::HeartbeatResponse;
+using dps::ClusterConfigRequest;
+using dps::ClusterConfigResponse;
+using dps::ServerConfig;
 using util::Timer;
 
 #define BROKER_ALIVE_TIMEOUT    5000
@@ -92,6 +95,35 @@ class GuruGrpcServer final : public GuruServer::Service {
       }
       return Status::OK;
     }
+
+    Status RequestConfig(ServerContext *context, const ClusterConfigRequest *request, ClusterConfigResponse *response) override
+    {
+      uint brokerid = request->serverid();
+      uint clusterid = brokers[brokerid].clusterid;
+
+      printf("[RequestConfig] Sending ClusterConfig for cluster %d to broker %d.\n", clusterid, brokerid);
+
+      Cluster config;
+      for(Cluster c: clusters) {
+        if (c.clusterid == clusterid) {
+          config = c;
+          break;
+        }
+      }
+
+      response->set_serverid(brokerid);
+      response->set_clusterid(clusterid);
+      response->set_clustersize(config.size);
+      for(uint bid: config.brokers) {
+        ServerConfig *brokerConfig = response->add_brokers();
+        brokerConfig->set_serverid(bid);
+        brokerConfig->set_servaddr(brokers[bid].server_addr);
+      }
+      for(uint tpcid: config.topics) {
+        response->add_topics(tpcid);
+      }
+      return Status::OK;
+    }
 };
 
 GuruToBrokerClient::GuruToBrokerClient(shared_ptr<Channel> channel)
@@ -123,6 +155,8 @@ int main(int argc, char* argv[]) {
   s1.initGuruToBrokerClient();
   c0.addBroker(s0.serverid);
   c0.addBroker(s1.serverid);
+  c0.addTopic(1);
+  c0.addTopic(2);
   clusters.push_back(c0);
   brokers[s0.serverid] = s0;
   brokers[s1.serverid] = s1;
