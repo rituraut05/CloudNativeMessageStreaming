@@ -4,15 +4,35 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <thread>
+#include <random>
+#include <ctime>
+#include <chrono>
+#include <future>
 #include "leveldb/db.h"
+#include "timer.hh"
 
-using std::vector;
-using std::unordered_map;
+
+using std::cout;
+using std::endl;
 using std::string;
+using std::stoi;
 using std::to_string;
+using std::thread;
+using std::vector;
+using std::default_random_engine;
+using std::uniform_int_distribution;
+using std::chrono::system_clock;
+using std::unordered_map;
+
+using util::Timer;
 
 
-#define HEARTBEAT_TIMEOUT       1000
+
+#define HEARTBEAT_TIMEOUT      1000
+#define MIN_ELECTION_TIMEOUT   3000
+#define MAX_ELECTION_TIMEOUT   6000
+
 #define HEART   "\xE2\x99\xA5"
 #define SPADE   "\xE2\x99\xA0"
 #define BROKER_CNT              3
@@ -30,11 +50,15 @@ typedef leveldb::DB *leveldbPtr;
 
 enum State {FOLLOWER, CANDIDATE, LEADER};
 string stateNames[3] = {"FOLLOWER", "CANDIDATE", "LEADER"};
+thread runElectionThread;
+Timer beginElectionTimer(1, MAX_ELECTION_TIMEOUT);
 
 // ***************************** Volatile variables *****************************
 
 unordered_map<int, State> currStateMap;
 vector<int> topicsUnderLeadership;
+unordered_map<int, int> votesReceived; // for a candidate
+
 
 std::shared_mutex mutex_ci; // for commitIndex
 std::shared_mutex mutex_lli; // for lastLogIndex
