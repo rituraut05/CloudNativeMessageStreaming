@@ -19,8 +19,11 @@ service BrokerServer
 message AppendEntriesRequest { }
 message AppendEntriesResponse { }
 
-message StartElectionRequest { }
-message StartElectionResponse { }
+message StartElectionRequest {
+  uint32 topicId = 1;
+}
+message StartElectionResponse {}
+
 message RequestVoteRequest { 
   uint32 term = 1;
   uint32 candidateId = 2;
