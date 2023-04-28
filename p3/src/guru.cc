@@ -28,25 +28,25 @@ using util::Timer;
 #define BROKER_ALIVE_TIMEOUT    5000
 #define HEART   "\xE2\x99\xA5"
 
-// ****************************** Class Definitions ***********************
-class GuruToBrokerClient {
-  public:
-    GuruToBrokerClient(shared_ptr<Channel> channel);
-    int StartElection(int topicid);
-
-  private:
-    unique_ptr<GuruServer::Stub> stub_;
-};
-
 // ****************************** Variables ******************************
-// Persist information 
-vector<Cluster> clusters;
-unordered_map<int, ServerInfo> brokers;
-// --------------------
 
 int cluster_cnt = 0;
 unordered_map<int, Timer> brokerAliveTimers;
 
+vector<Cluster> clusters; // persist
+unordered_map<int, ServerInfo> brokers; // persist
+
+unordered_map<int, int> topicToClusterMap; // persist
+unordered_map<int, int> topicToLeaderMap; // persist
+unordered_map<int, vector<int>> leaderToTopicsMap;
+unordered_map<int, vector<int>> publisherToTopicsMap; // required?
+unordered_map<int, vector<int>> subscriberToTopicsMap;
+
+// **************************** Functions ********************************
+
+void invokeStartElection(int bid, int topicid) {
+  int ret = brokers[bid].gbClient->StartElection(topicid);
+}
 
 // **************************** Guru Grpc Server **************************
 class GuruGrpcServer final : public GuruServer::Service {
@@ -61,16 +61,31 @@ class GuruGrpcServer final : public GuruServer::Service {
       printf("Received %s from broker %d in cluster %d\n", HEART, brokerid, clusterid);
 
       brokerAliveTimers[brokerid].reset(BROKER_ALIVE_TIMEOUT);
-      if(!brokers[brokerid].alive) brokers[brokerid].alive = true;
+      if(!brokers[brokerid].alive) {
+        brokers[brokerid].alive = true;
+        // send BrokerUp calls to other brokers in cluster 
+      }
 
       for(Cluster c: clusters) {
         for(uint servid: c.brokers) {
           if(servid != brokerid) {
             if(brokers[servid].alive && 
               brokerAliveTimers[servid].get_tick() > BROKER_ALIVE_TIMEOUT) {
-              printf("[SendHeartbeat] Brokerid: %d in cluster %d down.\n", servid, brokers[servid].clusterid);
+              printf("[SendHeartbeat] Brokerid: %d in cluster %d down.\n", servid, c.clusterid);
               brokers[servid].alive = false;
-              // Trigger election for topics of broker servid
+              for(int topicid: leaderToTopicsMap[servid]) {
+                printf("[SendHeartbeat] Triggering election for topic %d in cluster %d.\n", topicid, c.clusterid);
+                vector<thread> startElectionThreads;
+                for(uint bid: c.brokers) {
+                  if(bid != servid) {
+                    startElectionThreads.push_back(thread(invokeStartElection, bid, topicid));
+                  }
+                }
+                for(int i=0; i<startElectionThreads.size(); i++) {
+                  startElectionThreads[i].join();
+                }
+                startElectionThreads.clear();
+              }
             }
           }
         }
@@ -78,6 +93,14 @@ class GuruGrpcServer final : public GuruServer::Service {
       return Status::OK;
     }
 };
+
+GuruToBrokerClient::GuruToBrokerClient(shared_ptr<Channel> channel)
+  : stub_(BrokerServer::NewStub(channel)) {}
+
+int GuruToBrokerClient::StartElection(int topicid) {
+  printf("[StartElection] Invoking election for topic %d.\n", topicid);
+  return 0;
+}
 
 void RunGrpcServer(string server_address) {
   GuruGrpcServer service;
@@ -96,6 +119,8 @@ int main(int argc, char* argv[]) {
   Cluster c0(0);
   ServerInfo s0(0, 0, "0.0.0.0:50051");
   ServerInfo s1(1, 0, "0.0.0.0:50052");
+  s0.initGuruToBrokerClient();
+  s1.initGuruToBrokerClient();
   c0.addBroker(s0.serverid);
   c0.addBroker(s1.serverid);
   clusters.push_back(c0);
@@ -105,6 +130,10 @@ int main(int argc, char* argv[]) {
     brokerAliveTimers[j] = Timer(1, BROKER_ALIVE_TIMEOUT);
   }
   c0.print();
+  vector<int> topicsOfLeader1;
+  topicsOfLeader1.push_back(1);
+  topicsOfLeader1.push_back(2);
+  leaderToTopicsMap[1] = topicsOfLeader1;
   // ---------------------------------------------
 
   RunGrpcServer("0.0.0.0:50050");
