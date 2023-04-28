@@ -9,6 +9,7 @@
 
 using std::string;
 using std::vector;
+using std::remove;
 using std::to_string;
 using std::unique_ptr;
 using std::shared_ptr;
@@ -26,6 +27,16 @@ class GuruToBrokerClient {
     unique_ptr<BrokerServer::Stub> stub_;
 };
 
+class BrokerClient {
+  public:
+    BrokerClient(shared_ptr<Channel> channel);
+    int AppendEntries(int nextIndex, int lastIndex);
+    int RequestVote(int lastLogTerm, int lastLogIndex, int followerID, int topicID);
+
+  private:
+    unique_ptr<BrokerServer::Stub> stub_;
+};
+
 class ServerInfo {
   public:
     uint serverid;
@@ -34,6 +45,7 @@ class ServerInfo {
     uint clusterid;
     bool alive;
     GuruToBrokerClient *gbClient;
+    BrokerClient *client;
 
     ServerInfo() {}
     ServerInfo(uint sid, uint cid, string servaddr) {
@@ -47,6 +59,10 @@ class ServerInfo {
     void initGuruToBrokerClient() {
       this->gbClient = new GuruToBrokerClient(CreateChannel(this->server_addr, InsecureChannelCredentials()));
     }
+
+    void initBrokerClient() {
+      this->client = new BrokerClient(CreateChannel(this->server_addr, InsecureChannelCredentials()));
+    }
 };
 
 class Cluster {
@@ -54,11 +70,20 @@ class Cluster {
     uint clusterid;
     uint size;
     vector<uint> brokers;
+    vector<uint> topics;
 
     Cluster() {}
     Cluster(uint cid) {
       this->clusterid = cid;
       this->size = 0;
+    }
+
+    void addTopic(uint topicid) {
+      this->topics.push_back(topicid);
+    }
+
+    void removeTopic(uint topicid) {
+      remove(this->topics.begin(), this->topics.end(), topicid);
     }
 
     void addBroker(uint sid) {
@@ -81,7 +106,11 @@ class Cluster {
       for(uint servid: brokers) {
         printf("Broker: %d\n", servid);
       }
-      printf("\n");
+      printf("Topics: ");
+      for(uint topicid: topics) {
+        printf("%d ", topicid);
+      }
+      printf("\n\n");
     }
 };
 

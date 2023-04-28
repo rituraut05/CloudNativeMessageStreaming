@@ -35,14 +35,15 @@ using util::Timer;
 
 #define HEART   "\xE2\x99\xA5"
 #define SPADE   "\xE2\x99\xA0"
-#define BROKER_CNT              3
+
 
 //// Added for testing, remove after getConfig API is written ////
 
-#define SERVER1 "0.0.0.0:50052" // node1
-#define SERVER2 "0.0.0.0:50053" // node2
-#define SERVER3 "0.0.0.0:50054" // node3
-string serverIPs[BROKER_CNT] = {SERVER1, SERVER2, SERVER3};
+// #define BROKER_CNT              3
+// #define SERVER1 "0.0.0.0:50052" // node1
+// #define SERVER2 "0.0.0.0:50053" // node2
+// #define SERVER3 "0.0.0.0:50054" // node3
+// string serverIPs[BROKER_CNT] = {SERVER1, SERVER2, SERVER3};
 
 ////////////////////////////////////////////////////////////
 
@@ -146,13 +147,13 @@ class Log {
 
 // *************************** Persistent Variables **************************
 
-vector<int> topicsInCluster;
 unordered_map<int, int> currentTerm;
 unordered_map<int, int> lastApplied;
 unordered_map<int, int> votedFor;
 unordered_map<int, vector<Log>> logs;
 
 // ************************** DPS variables ************************************
-vector<int> topics;
-vector<int> leaderTopics;
+vector<int> topicsInCluster;
+vector<int> topicsUnderLeadership;
+
 #endif

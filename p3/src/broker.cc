@@ -1,10 +1,9 @@
 #include <grpc/grpc.h>
 #include <grpcpp/grpcpp.h>
 #include <string>
-#include <thread>
 
-#include "timer.hh"
 #include "utils.hh"
+#include "common.hh"
 #include "dps.grpc.pb.h"
 
 using grpc::Channel;
@@ -32,6 +31,11 @@ using dps::HeartbeatRequest;
 using dps::HeartbeatResponse;
 using dps::RequestVoteRequest;
 using dps::RequestVoteResponse;
+using dps::StartElectionRequest;
+using dps::StartElectionResponse;
+using dps::ClusterConfigRequest;
+using dps::ClusterConfigResponse;
+using dps::ServerConfig;
 using util::Timer;
 
 
@@ -41,27 +45,18 @@ class BrokerToGuruClient {
     BrokerToGuruClient(shared_ptr<Channel> guruchannel);
     int SetLeader();
     int SendHeartbeat();
+    int RequestConfig(int brokerid);
 
   private:
     unique_ptr<GuruServer::Stub> gurustub_;
-};
-
-class BrokerClient {
-  public:
-    BrokerClient(shared_ptr<Channel> channel);
-    int AppendEntries(int nextIndex, int lastIndex);
-    int RequestVote(int lastLogTerm, int lastLogIndex, int followerID, int topicID);
-
-  private:
-    unique_ptr<BrokerServer::Stub> stub_;
 };
 
 // *************************** Volatile Variables *****************************
 uint clusterID;
 uint serverID;
 Timer heartbeatTimer(1, HEARTBEAT_TIMEOUT);
+vector<ServerInfo> brokersInCluster; 
 BrokerToGuruClient* bgClient;
-BrokerClient* brokerClients[BROKER_CNT];
 
 // *************************** Functions *************************************
 
@@ -105,6 +100,36 @@ int BrokerToGuruClient::SendHeartbeat() {
     return 0;
   } else {
     printf("[SendHeartbeat RPC] Failure.\n");
+    return -1;
+  }
+}
+
+int BrokerToGuruClient::RequestConfig(int brokerid) {
+  ClusterConfigRequest request;
+  ClusterConfigResponse response;
+  Status status;
+  ClientContext context;
+
+  request.set_serverid(brokerid);
+  response.Clear();
+  status = gurustub_->RequestConfig(&context, request, &response);
+
+  if(status.ok()) {
+    printf("[RequestConfig] Setting clusterID = %d.\n", response.clusterid());
+    clusterID = response.clusterid();
+    brokersInCluster.clear();
+    for(ServerConfig sc: response.brokers()) {
+      ServerInfo si(sc.serverid(), clusterID, sc.servaddr());
+      if(si.serverid != serverID) si.initBrokerClient();
+      brokersInCluster.push_back(si);
+    }
+    topicsInCluster.clear();
+    for(uint topicid: response.topics()) {
+      topicsInCluster.push_back(topicid);
+    }
+    return 0;
+  } else {
+    printf("[RequestConfig] Unable to fetch cluster config, please retry.\n");
     return -1;
   }
 }
@@ -155,6 +180,54 @@ int BrokerClient::RequestVote(int lastLogTerm, int lastLogIndex, int followerID,
 }
 
 
+
+/************************ Helper Functions for BrokerGrpcServer **************************************/
+int getRandomTimeout() {
+  unsigned seed = system_clock::now().time_since_epoch().count();
+  default_random_engine generator(seed);
+  uniform_int_distribution<int> distribution(MIN_ELECTION_TIMEOUT, MAX_ELECTION_TIMEOUT);
+  return distribution(generator);
+}
+
+void runElection(int topicID) {
+  printf("Hi I have started the runElection async function\n");
+
+  // start election timer
+  beginElectionTimer.start(getRandomTimeout());
+  while(beginElectionTimer.running() && 
+    beginElectionTimer.get_tick() < beginElectionTimer._timeout) ; // spin
+  printf("[runElection] Spun for %d ms before timing out in state %d for term %d\n", beginElectionTimer.get_tick(), currStateMap[topicID], currentTerm[topicID]);
+
+  // invoke requestVote on other alive brokers.
+  mutex_votes.lock();
+  votesReceived[topicID] = 0;
+  mutex_votes.unlock();
+
+  mutex_ct.lock();
+  currentTerm[topicID]++;
+  pmetadata[topicID]->Put(leveldb::WriteOptions(), "currentTerm", to_string(currentTerm[topicID]));
+  mutex_ct.unlock();
+
+  mutex_vf.lock();
+  votedFor[topicID] = serverID;
+  pmetadata[topicID]->Put(leveldb::WriteOptions(), "votedFor", to_string(serverID));
+  mutex_vf.unlock();
+
+  mutex_votes.lock();
+  votesReceived[topicID]++;
+  mutex_votes.unlock();
+
+  printf("[runElection] Running Election for topic %d, term=%d\n", topicID, currentTerm[topicID]);
+
+  // TODO: invoke RequestVote threads
+
+  // TODO: wait until all request votes threads have completed.
+
+  // TODO: call setLeader if majority votes were received.
+}
+
+
+/****************************************** BrokerGrpcServer *****************************************/
 class BrokerGrpcServer final : public BrokerServer::Service {
   public:
     explicit BrokerGrpcServer() {}
@@ -193,7 +266,6 @@ class BrokerGrpcServer final : public BrokerServer::Service {
         */
         mutex_ct.lock();
         currentTerm[topicID] = term;
-        printf("1\n");
         pmetadata[topicID]->Put(leveldb::WriteOptions(), "currentTerm", to_string(currentTerm[topicID]));
         mutex_ct.unlock();
 
@@ -256,13 +328,26 @@ class BrokerGrpcServer final : public BrokerServer::Service {
       // anything that doesn't follow the above condition don't vote!
       return Status::OK;
     }
+
+    Status StartElection(ServerContext *context, const StartElectionRequest *req, StartElectionResponse *resp) override
+    {
+      int topicID = req->topicid();
+      // start election which will trigger requestVote
+      std::async(std::launch::async, runElection, topicID);
+      /*
+      // test the above otherwise replace it with the below
+      // runElectionThread = thread { runElection, topicID}; 
+      // TODO: Join this thread appropriately.
+      */
+      return Status::OK;
+    }
 };
 
 void openOrCreateDBs() {
   leveldb::Options options;
   options.create_if_missing = true;
 
-  for(auto id: topics){
+  for(auto id: topicsInCluster){
     leveldbPtr plogsPtr;
     leveldb::Status plogs_status = leveldb::DB::Open(options, "/tmp/plogs" + to_string(serverID) + "-" + to_string(id), &plogsPtr);
     if (!plogs_status.ok()) std::cerr << plogs_status.ToString() << endl;
@@ -287,23 +372,6 @@ void openOrCreateDBs() {
   
 }
 
-string server_addr = "";
-void test_set_dummy_config(){
-  topics.push_back(0);
-  switch(serverID){
-    case 0:
-      server_addr = serverIPs[0];
-      break;
-    case 1:
-      server_addr = serverIPs[1];
-      break;
-    case 2:
-      server_addr = serverIPs[2];
-      break;
-
-  };
-}
-
 void RunGrpcServer(string server_address) {
   BrokerGrpcServer service;
   ServerBuilder builder;
@@ -316,28 +384,29 @@ void RunGrpcServer(string server_address) {
 
 int main(int argc, char* argv[]) {
   if(argc != 4) {
-    printf("Usage: ./broker <serverid> <clusterid> <guruAddr>\n");
+    printf("Usage: ./broker <serverid> <guruAddr> <brokerAddr>\n");
     return 0;
   }
   serverID = atoi(argv[1]);
-  clusterID = atoi(argv[2]);
-  bgClient = new BrokerToGuruClient(grpc::CreateChannel(argv[3], grpc::InsecureChannelCredentials()));
+  bgClient = new BrokerToGuruClient(grpc::CreateChannel(argv[2], grpc::InsecureChannelCredentials()));
 
-  // TODO: getConfig from Guru and populate cluster info
-  // set serverIPs, topics, leaderTopics
-
-  test_set_dummy_config(); // remove when getConfig is implemented
-
-  // initialize channels to brokers
-  for(int i = 0; i<BROKER_CNT; i++) {
-    if(i != serverID) {
-      brokerClients[i] = new BrokerClient(grpc::CreateChannel(serverIPs[i], grpc::InsecureChannelCredentials()));
-    }
+  int rc_ret = bgClient->RequestConfig(serverID);
+  assert(rc_ret == 0);
+  for(ServerInfo si: brokersInCluster) {
+    printf("Broker: %d in Cluster: %d\n", si.serverid, clusterID);
   }
+  for(uint tpcid: topicsInCluster) {
+    printf("Topic added to cluster: %d\n", tpcid);
+  }
+
+  /*
+  * Please use brokersInCluster.client to call BrokerClient's functions like AppendEntries and RequestVote
+  * which will contact BrokerGrpcServer of respective server_addr 
+  */
 
   openOrCreateDBs();
   thread heartbeat(runHeartbeatTimer);
-  RunGrpcServer(server_addr);
+  RunGrpcServer(argv[3]);
 
   if(heartbeat.joinable()) heartbeat.join();
   return 0;
