@@ -15,7 +15,16 @@ using std::to_string;
 #define HEARTBEAT_TIMEOUT       1000
 #define HEART   "\xE2\x99\xA5"
 #define SPADE   "\xE2\x99\xA0"
+#define BROKER_CNT              3
 
+//// Added for testing, remove after getConfig API is written ////
+
+#define SERVER1 "0.0.0.0:50052" // node1
+#define SERVER2 "0.0.0.0:50053" // node2
+#define SERVER3 "0.0.0.0:50054" // node3
+string serverIPs[BROKER_CNT] = {SERVER1, SERVER2, SERVER3};
+
+////////////////////////////////////////////////////////////
 
 typedef leveldb::DB *leveldbPtr;
 
@@ -55,14 +64,13 @@ class Log {
   public:
     int index;
     int term;
-    string key;
+    // string key;
     string value;
 
     Log() {}
-    Log(int index, int term, string key, string value){
+    Log(int index, int term, string value){
       this->index = index;
       this->term = term;
-      this->key = key;
       this->value = value;
     }
 
@@ -71,7 +79,7 @@ class Log {
       vector<string> logParts = split(logString, ';');
       index = stoi(logParts[0]);
       term = stoi(logParts[1]);
-      key = logParts[2];
+      // key = logParts[2];
       value = logParts[3];
     }
 
@@ -79,7 +87,7 @@ class Log {
       string logString = "";
       logString += to_string(index) + ";";
       logString += to_string(term) + ";";
-      logString += key + ";";
+      // logString += key + ";";
       logString += value;
       return logString;
     }
@@ -108,6 +116,7 @@ unordered_map<int, int> lastApplied;
 unordered_map<int, int> votedFor;
 unordered_map<int, vector<Log>> logs;
 
-
-
+// ************************** DPS variables ************************************
+vector<int> topics;
+vector<int> leaderTopics;
 #endif
