@@ -1,9 +1,7 @@
 #include <grpc/grpc.h>
 #include <grpcpp/grpcpp.h>
 #include <string>
-#include <thread>
 
-#include "timer.hh"
 #include "utils.hh"
 #include "dps.grpc.pb.h"
 
@@ -32,6 +30,8 @@ using dps::HeartbeatRequest;
 using dps::HeartbeatResponse;
 using dps::RequestVoteRequest;
 using dps::RequestVoteResponse;
+using dps::StartElectionRequest;
+using dps::StartElectionResponse;
 using util::Timer;
 
 
@@ -155,6 +155,54 @@ int BrokerClient::RequestVote(int lastLogTerm, int lastLogIndex, int followerID,
 }
 
 
+
+/************************ Helper Functions for BrokerGrpcServer **************************************/
+int getRandomTimeout() {
+  unsigned seed = system_clock::now().time_since_epoch().count();
+  default_random_engine generator(seed);
+  uniform_int_distribution<int> distribution(MIN_ELECTION_TIMEOUT, MAX_ELECTION_TIMEOUT);
+  return distribution(generator);
+}
+
+void runElection(int topicID) {
+  printf("Hi I have started the runElection async function\n");
+
+  // start election timer
+  beginElectionTimer.start(getRandomTimeout());
+  while(beginElectionTimer.running() && 
+    beginElectionTimer.get_tick() < beginElectionTimer._timeout) ; // spin
+  printf("[runElection] Spun for %d ms before timing out in state %d for term %d\n", beginElectionTimer.get_tick(), currStateMap[topicID], currentTerm[topicID]);
+
+  // invoke requestVote on other alive brokers.
+  mutex_votes.lock();
+  votesReceived[topicID] = 0;
+  mutex_votes.unlock();
+
+  mutex_ct.lock();
+  currentTerm[topicID]++;
+  pmetadata[topicID]->Put(leveldb::WriteOptions(), "currentTerm", to_string(currentTerm[topicID]));
+  mutex_ct.unlock();
+
+  mutex_vf.lock();
+  votedFor[topicID] = serverID;
+  pmetadata[topicID]->Put(leveldb::WriteOptions(), "votedFor", to_string(serverID));
+  mutex_vf.unlock();
+
+  mutex_votes.lock();
+  votesReceived[topicID]++;
+  mutex_votes.unlock();
+
+  printf("[runElection] Running Election for topic %d, term=%d\n", topicID, currentTerm[topicID]);
+
+  // TODO: invoke RequestVote threads
+
+  // TODO: wait until all request votes threads have completed.
+
+  // TODO: call setLeader if majority votes were received.
+}
+
+
+/****************************************** BrokerGrpcServer *****************************************/
 class BrokerGrpcServer final : public BrokerServer::Service {
   public:
     explicit BrokerGrpcServer() {}
@@ -193,7 +241,6 @@ class BrokerGrpcServer final : public BrokerServer::Service {
         */
         mutex_ct.lock();
         currentTerm[topicID] = term;
-        printf("1\n");
         pmetadata[topicID]->Put(leveldb::WriteOptions(), "currentTerm", to_string(currentTerm[topicID]));
         mutex_ct.unlock();
 
@@ -254,6 +301,19 @@ class BrokerGrpcServer final : public BrokerServer::Service {
       // }
 
       // anything that doesn't follow the above condition don't vote!
+      return Status::OK;
+    }
+
+    Status StartElection(ServerContext *context, const StartElectionRequest *req, StartElectionResponse *resp) override
+    {
+      int topicID = req->topicid();
+      // start election which will trigger requestVote
+      std::async(std::launch::async, runElection, topicID);
+      /*
+      // test the above otherwise replace it with the below
+      // runElectionThread = thread { runElection, topicID}; 
+      // TODO: Join this thread appropriately.
+      */
       return Status::OK;
     }
 };
