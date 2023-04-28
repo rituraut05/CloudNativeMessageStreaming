@@ -13,6 +13,8 @@ using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::Status;
 using grpc::ServerContext;
+using grpc::ClientContext;
+using grpc::StatusCode;
 using std::string;
 using std::shared_ptr;
 using std::unique_ptr;
@@ -23,6 +25,8 @@ using dps::BrokerServer;
 using dps::GuruServer;
 using dps::HeartbeatRequest;
 using dps::HeartbeatResponse;
+using dps::StartElectionRequest;
+using dps::StartElectionResponse;
 using util::Timer;
 
 #define BROKER_ALIVE_TIMEOUT    5000
@@ -44,8 +48,13 @@ unordered_map<int, vector<int>> subscriberToTopicsMap;
 
 // **************************** Functions ********************************
 
-void invokeStartElection(int bid, int topicid) {
-  int ret = brokers[bid].gbClient->StartElection(topicid);
+void invokeStartElection(int bid, int topicID) {
+  int ret = brokers[bid].gbClient->StartElection(topicID);
+  if(ret == 0) {
+    printf("Election started successfully for topic %d at broker %s %d\n", topicID, brokers[bid].server_name, bid);
+  } else {
+    printf("Failure in starting election for topic %d at broker %s %d\n", topicID, brokers[bid].server_name, bid);
+  }
 }
 
 // **************************** Guru Grpc Server **************************
@@ -63,7 +72,7 @@ class GuruGrpcServer final : public GuruServer::Service {
       brokerAliveTimers[brokerid].reset(BROKER_ALIVE_TIMEOUT);
       if(!brokers[brokerid].alive) {
         brokers[brokerid].alive = true;
-        // send BrokerUp calls to other brokers in cluster 
+        // TODO: send BrokerUp calls to other brokers in cluster 
       }
 
       for(Cluster c: clusters) {
@@ -85,7 +94,10 @@ class GuruGrpcServer final : public GuruServer::Service {
                   startElectionThreads[i].join();
                 }
                 startElectionThreads.clear();
+                // TODO: add this topic to temporary set of topics for which election is started.
+                // TODO: update topicToLeaderMap[topicID] = -1
               }
+              // TODO: remove the servid from leaderToTopicsMap
             }
           }
         }
@@ -97,9 +109,27 @@ class GuruGrpcServer final : public GuruServer::Service {
 GuruToBrokerClient::GuruToBrokerClient(shared_ptr<Channel> channel)
   : stub_(BrokerServer::NewStub(channel)) {}
 
-int GuruToBrokerClient::StartElection(int topicid) {
-  printf("[StartElection] Invoking election for topic %d.\n", topicid);
-  return 0;
+int GuruToBrokerClient::StartElection(int topicID) {
+  StartElectionRequest request;
+  StartElectionResponse reply;
+  Status status;
+  ClientContext context;
+
+  request.set_topicid(topicID);
+  reply.Clear();
+
+  status = stub_->StartElection(&context, request, &reply);
+
+  if(status.ok()) {
+    printf("[StartElection]: GuruToBrokerClient - RPC Success\n");
+    return 0;
+  } else {
+    if(status.error_code() == StatusCode::UNAVAILABLE){
+      printf("[StartElection]: GuruToBrokerClient - Unavailable server\n");
+    }
+    printf("[StartElection]: RPC Failure\n");
+    return -1;
+  }
 }
 
 void RunGrpcServer(string server_address) {
