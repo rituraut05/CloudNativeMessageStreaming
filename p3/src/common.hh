@@ -3,10 +3,28 @@
 
 #include <string>
 #include <vector>
+#include <grpc/grpc.h>
+#include <grpcpp/grpcpp.h>
+#include "dps.grpc.pb.h"
 
 using std::string;
 using std::vector;
 using std::to_string;
+using std::unique_ptr;
+using std::shared_ptr;
+using grpc::CreateChannel;
+using grpc::InsecureChannelCredentials;
+using grpc::Channel;
+using dps::BrokerServer;
+
+class GuruToBrokerClient {
+  public:
+    GuruToBrokerClient(shared_ptr<Channel> channel);
+    int StartElection(int topicid);
+
+  private:
+    unique_ptr<BrokerServer::Stub> stub_;
+};
 
 class ServerInfo {
   public:
@@ -15,6 +33,7 @@ class ServerInfo {
     string server_name;
     uint clusterid;
     bool alive;
+    GuruToBrokerClient *gbClient;
 
     ServerInfo() {}
     ServerInfo(uint sid, uint cid, string servaddr) {
@@ -23,6 +42,10 @@ class ServerInfo {
       this->server_addr = servaddr;
       this->server_name = "C" + to_string(cid) + "S" + to_string(sid);
       this->alive = true;
+    }
+
+    void initGuruToBrokerClient() {
+      this->gbClient = new GuruToBrokerClient(CreateChannel(this->server_addr, InsecureChannelCredentials()));
     }
 };
 

@@ -6,7 +6,6 @@
 #include "timer.hh"
 #include "utils.hh"
 #include "dps.grpc.pb.h"
-#include "utils.hh"
 
 using grpc::Channel;
 using grpc::ClientContext;
