@@ -46,6 +46,11 @@ void util::Timer::set_tick_duration(int const& d)
 	_tick_duration = d;
 }
 
+void util::Timer::set_running(bool running)
+{
+  _running = running;
+}
+
 /* Methods */
 
 void util::Timer::start(int timeout)
@@ -64,4 +69,9 @@ void util::Timer::reset(int timeout)
 bool util::Timer::updated()
 {
 	return _update;
+}
+
+bool util::Timer::running()
+{
+  return _running;
 }

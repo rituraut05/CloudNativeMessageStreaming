@@ -14,6 +14,7 @@ namespace util {
       int _tick_duration; // Tick duration in msec
       int  _current_tick; // Current tick
       bool       _update; // If the tick count has updated
+      bool      _running; // To indicate if timer is running
       /* Timers */
       std::chrono::time_point<std::chrono::system_clock> _start;   // Time start
       std::chrono::time_point<std::chrono::system_clock>   _end;   // End
@@ -28,10 +29,12 @@ namespace util {
       int get_tick(); // Returns current tick
       /* Setters */
       void set_tick_duration(int const& d); // Sets tick duration
+      void       set_running(bool running); // Sets running 
       /* Methods */
       void start(int timeout);   // Starts the timer
       void reset(int timeout);   // Resets the timer
-      bool updated(); // If the tick count has changed 
+      bool updated(); // If the tick count has changed
+      bool running(); // If the timer is running or not   
   };
 }
 
