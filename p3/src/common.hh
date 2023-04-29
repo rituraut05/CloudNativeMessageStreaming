@@ -7,6 +7,8 @@
 #include <grpcpp/grpcpp.h>
 #include "dps.grpc.pb.h"
 
+#define GURU_ADDRESS "0.0.0.0:50050"
+
 using std::string;
 using std::vector;
 using std::remove;
