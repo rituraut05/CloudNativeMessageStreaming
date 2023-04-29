@@ -200,6 +200,6 @@ int main(int argc, char* argv[]) {
   leaderToTopicsMap[1] = topicsOfLeader1;
   // ---------------------------------------------
 
-  RunGrpcServer("0.0.0.0:50050");
+  RunGrpcServer(GURU_ADDRESS);
   return 0;
 }

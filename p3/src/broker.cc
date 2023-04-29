@@ -383,12 +383,12 @@ void RunGrpcServer(string server_address) {
 }
 
 int main(int argc, char* argv[]) {
-  if(argc != 4) {
-    printf("Usage: ./broker <serverid> <guruAddr> <brokerAddr>\n");
+  if(argc != 2) {
+    printf("Usage: ./broker <serverid>\n");
     return 0;
   }
   serverID = atoi(argv[1]);
-  bgClient = new BrokerToGuruClient(grpc::CreateChannel(argv[2], grpc::InsecureChannelCredentials()));
+  bgClient = new BrokerToGuruClient(grpc::CreateChannel(GURU_ADDRESS, grpc::InsecureChannelCredentials()));
 
   int rc_ret = bgClient->RequestConfig(serverID);
   assert(rc_ret == 0);
@@ -406,7 +406,7 @@ int main(int argc, char* argv[]) {
 
   openOrCreateDBs();
   thread heartbeat(runHeartbeatTimer);
-  RunGrpcServer(argv[3]);
+  RunGrpcServer(brokersInCluster[serverID].server_addr);
 
   if(heartbeat.joinable()) heartbeat.join();
   return 0;
