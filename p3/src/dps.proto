@@ -54,6 +54,7 @@ service GuruServer
   // Communication with brokers
   rpc SetLeader(SetLeaderRequest) returns (SetLeaderResponse) {}
   rpc SendHeartbeat(HeartbeatRequest) returns (HeartbeatResponse) {}
+  rpc RequestConfig(ClusterConfigRequest) returns (ClusterConfigResponse) {}
 }
 
 message GetBrokerRequest { }
@@ -67,10 +68,26 @@ message AddTopicResponse { }
 
 message SetLeaderRequest { }
 message SetLeaderResponse { }
+
 message HeartbeatRequest {
   uint32 serverid = 1;
   uint32 clusterid = 2;
 }
 message HeartbeatResponse {
   bool success = 1;
+}
+
+message ServerConfig {
+  uint32 serverid = 1;
+  string servaddr = 2;
+}
+message ClusterConfigRequest {
+  uint32 serverid = 1;
+}
+message ClusterConfigResponse {
+  uint32 serverid = 1;
+  uint32 clusterid = 2;
+  uint32 clustersize = 3;
+  repeated ServerConfig brokers = 4;
+  repeated uint32 topics = 5;
 }
