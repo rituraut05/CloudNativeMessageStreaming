@@ -74,6 +74,7 @@ void setCurrState(State cs, int topicID)
   mutex_cs.unlock();
   if(cs == LEADER) {
     // add topicid to your topics list.
+    // TODO: add locks
     topicsUnderLeadership.push_back(topicID);
     // TODO: call setLeaderId for guru.
     printf("%s %s %s %s %s %s %s %s %s %s %s %s \n", SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE);
@@ -211,10 +212,16 @@ void runElection(int topicID) {
   printf("Hi I have started the runElection async function\n");
 
   // start election timer
-  beginElectionTimer.start(getRandomTimeout());
-  while(beginElectionTimer.running() && 
-    beginElectionTimer.get_tick() < beginElectionTimer._timeout) ; // spin
-  printf("[runElection] Spun for %d ms before timing out in state %d for term %d\n", beginElectionTimer.get_tick(), currStateMap[topicID], currentTerm[topicID]);
+  // TODO: Add locks
+  beginElectionTimer[topicID] = Timer(1, MAX_ELECTION_TIMEOUT);
+  beginElectionTimer[topicID].set_running(true);
+  beginElectionTimer[topicID].start(getRandomTimeout());
+
+  while(beginElectionTimer[topicID].running() && beginElectionTimer[topicID].get_tick() < beginElectionTimer[topicID]._timeout) ; // spin
+
+  if(!beginElectionTimer[topicID].running()) return;
+  
+  printf("[runElection] Spun for %d ms before timing out in state %d for term %d\n", beginElectionTimer[topicID].get_tick(), stateNames[currStateMap[topicID]].c_str(), currentTerm[topicID]);
 
   // invoke requestVote on other alive brokers.
   mutex_votes.lock();
@@ -254,6 +261,7 @@ void runElection(int topicID) {
   }
   RequestVoteThreads.clear();
 
+  beginElectionTimer[topicID].set_running(false);
   // call setLeader if majority votes were received.
   int majority = (BROKER_COUNT+1)/2;
   printf("votesReceived = %d, Majority = %d for topic %d\n", votesReceived[topicID], majority, topicID);
@@ -333,6 +341,7 @@ class BrokerGrpcServer final : public BrokerServer::Service {
         if(llt > voter_llt || (llt == voter_llt && lli >= voter_lli)) { // candidate has longer log than voter or ..
           resp->set_term(ctLocal); 
           resp->set_votegranted(true);
+          beginElectionTimer[topicID].set_running(false);
           // electionTimer.reset(getRandomTimeout());
           printf("llt = %d \nvoter_llt = %d \nlli = %d \nvoter_lli = %d\n", llt, voter_llt, lli, voter_lli);
           printf("VOTED!: Candidate has longer log than me\n");
@@ -370,12 +379,13 @@ class BrokerGrpcServer final : public BrokerServer::Service {
     {
       int topicID = req->topicid();
       // start election which will trigger requestVote
+      using namespace std::chrono;
+      auto start = high_resolution_clock::now();
       std::async(std::launch::async, runElection, topicID);
-      /*
-      // test the above otherwise replace it with the below
-      // runElectionThread = thread { runElection, topicID}; 
-      // TODO: Join this thread appropriately.
-      */
+      auto stop = high_resolution_clock::now();
+      auto duration = duration_cast<microseconds>(stop - start);
+      cout << "Time required to start election : " << duration.count() << endl;
+      
       return Status::OK;
     }
 };
