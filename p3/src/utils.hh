@@ -57,7 +57,6 @@ Timer beginElectionTimer(1, MAX_ELECTION_TIMEOUT);
 // ***************************** Volatile variables *****************************
 
 unordered_map<int, State> currStateMap;
-vector<int> topicsUnderLeadership;
 unordered_map<int, int> votesReceived; // for a candidate
 
 
