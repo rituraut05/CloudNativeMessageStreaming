@@ -181,16 +181,20 @@ int main(int argc, char* argv[]) {
   Cluster c0(0);
   ServerInfo s0(0, 0, "0.0.0.0:50051");
   ServerInfo s1(1, 0, "0.0.0.0:50052");
+  ServerInfo s2(2, 0, "0.0.0.0:50053");
   s0.initGuruToBrokerClient();
   s1.initGuruToBrokerClient();
+  s2.initGuruToBrokerClient();
   c0.addBroker(s0.serverid);
   c0.addBroker(s1.serverid);
+  c0.addBroker(s2.serverid);
   c0.addTopic(1);
   c0.addTopic(2);
   clusters.push_back(c0);
   brokers[s0.serverid] = s0;
   brokers[s1.serverid] = s1;
-  for(int j = 0; j<2; j++) {
+  brokers[s2.serverid] = s2;
+  for(int j = 0; j<3; j++) {
     brokerAliveTimers[j] = Timer(1, BROKER_ALIVE_TIMEOUT);
   }
   c0.print();
