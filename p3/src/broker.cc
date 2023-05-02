@@ -193,9 +193,8 @@ void runElection(int topicID) {
   printf("Hi I have started the runElection async function\n");
 
   // start election timer
-  beginElectionTimer.start(getRandomTimeout());
-  while(beginElectionTimer.running() && 
-    beginElectionTimer.get_tick() < beginElectionTimer._timeout) ; // spin
+  Timer beginElectionTimer(1, getRandomTimeout());
+  while(beginElectionTimer.get_tick() < beginElectionTimer._timeout) ; // spin
   printf("[runElection] Spun for %d ms before timing out in state %d for term %d\n", beginElectionTimer.get_tick(), currStateMap[topicID], currentTerm[topicID]);
 
   // invoke requestVote on other alive brokers.

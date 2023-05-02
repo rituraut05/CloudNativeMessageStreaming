@@ -52,7 +52,6 @@ typedef leveldb::DB *leveldbPtr;
 enum State {FOLLOWER, CANDIDATE, LEADER};
 string stateNames[3] = {"FOLLOWER", "CANDIDATE", "LEADER"};
 thread runElectionThread;
-Timer beginElectionTimer(1, MAX_ELECTION_TIMEOUT);
 
 // ***************************** Volatile variables *****************************
 
