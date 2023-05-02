@@ -32,6 +32,7 @@ using util::Timer;
 #define HEARTBEAT_TIMEOUT      1000
 #define MIN_ELECTION_TIMEOUT   3000
 #define MAX_ELECTION_TIMEOUT   6000
+#define BROKER_COUNT brokersInCluster.size()
 
 #define HEART   "\xE2\x99\xA5"
 #define SPADE   "\xE2\x99\xA0"
@@ -58,6 +59,8 @@ Timer beginElectionTimer(1, MAX_ELECTION_TIMEOUT);
 
 unordered_map<int, State> currStateMap;
 unordered_map<int, int> votesReceived; // for a candidate
+unordered_map<int, int> lastLogIndex; // valid index starts from 1
+
 
 
 std::shared_mutex mutex_ci; // for commitIndex
