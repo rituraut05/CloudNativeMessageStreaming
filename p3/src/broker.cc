@@ -212,7 +212,7 @@ void runElection(int topicID) {
   printf("Hi I have started the runElection async function\n");
 
   // start election timer
-  // TODO: Add locks
+  // TODO: Add locks for beginElectionTimer
   beginElectionTimer[topicID] = Timer(1, MAX_ELECTION_TIMEOUT);
   beginElectionTimer[topicID].set_running(true);
   beginElectionTimer[topicID].start(getRandomTimeout());
@@ -385,7 +385,7 @@ class BrokerGrpcServer final : public BrokerServer::Service {
       auto stop = high_resolution_clock::now();
       auto duration = duration_cast<microseconds>(stop - start);
       cout << "Time required to start election : " << duration.count() << endl;
-      
+
       return Status::OK;
     }
 };
