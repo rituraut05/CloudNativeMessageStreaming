@@ -41,19 +41,29 @@ using util::Timer;
 // ****************************** Variables ******************************
 
 int cluster_cnt = 0;
+
+// brokerid - Timer with BROKER_ALIVE_TIMEOUT
 unordered_map<int, Timer> brokerAliveTimers;
+
+// topicid - Timer with WAIT_FOR_LEADER_TIMEOUT
 unordered_map<int, Timer> waitForElectionTimers;
 
 vector<Cluster> clusters; // persist
+// brokerid - ServerInfo
 unordered_map<int, ServerInfo> brokers; // persist
 
+// topicid - clusterid
 unordered_map<int, int> topicToClusterMap; // persist
+// topicid - leaderid (brokerid)
 unordered_map<int, int> topicToLeaderMap; // persist
+// leaderid (brokerid) - list of topic ids under its leadership
 unordered_map<int, vector<int>> leaderToTopicsMap;
+// publisherid - list of topics it sends messages to
 unordered_map<int, vector<int>> publisherToTopicsMap; // required?
+// subscriberid - list of topics it consumes messages from
 unordered_map<int, vector<int>> subscriberToTopicsMap;
 
-shared_mutex mutex_tlm;
+shared_mutex mutex_tlm; // lock for topicToLeaderMap
 
 // **************************** Functions ********************************
 
