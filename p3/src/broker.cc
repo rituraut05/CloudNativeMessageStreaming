@@ -239,9 +239,10 @@ void runElection(int topicID) {
 
   // invoke RequestVote threads
   vector<thread> RequestVoteThreads;
-  for(ServerInfo si: brokersInCluster) {
-    if(si.serverid != serverID) {
-      RequestVoteThreads.push_back(thread(invokeRequestVote, si.client, si.serverid, topicID));
+  for(auto si: brokersInCluster) {
+    if(si.second.serverid != serverID) {
+
+      RequestVoteThreads.push_back(thread(invokeRequestVote, si.second.client, si.second.serverid, topicID));
     }
   }
 
