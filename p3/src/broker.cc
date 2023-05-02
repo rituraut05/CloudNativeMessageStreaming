@@ -55,7 +55,7 @@ class BrokerToGuruClient {
 uint clusterID;
 uint serverID;
 Timer heartbeatTimer(1, HEARTBEAT_TIMEOUT);
-vector<ServerInfo> brokersInCluster; 
+unordered_map<int, ServerInfo> brokersInCluster;
 BrokerToGuruClient* bgClient;
 
 // *************************** Functions *************************************
@@ -122,7 +122,7 @@ int BrokerToGuruClient::RequestConfig(int brokerid) {
     for(ServerConfig sc: response.brokers()) {
       ServerInfo si(sc.serverid(), clusterID, sc.servaddr());
       if(si.serverid != serverID) si.initBrokerClient();
-      brokersInCluster.push_back(si);
+      brokersInCluster[si.serverid] = si;
     }
     topicsInCluster.clear();
     for(uint topicid: response.topics()) {
@@ -428,8 +428,8 @@ int main(int argc, char* argv[]) {
 
   int rc_ret = bgClient->RequestConfig(serverID);
   assert(rc_ret == 0);
-  for(ServerInfo si: brokersInCluster) {
-    printf("Broker: %d in Cluster: %d\n", si.serverid, clusterID);
+  for(auto si: brokersInCluster) {
+    printf("Broker: %d-%s in Cluster: %d\n", si.first, si.second.server_name.c_str(), clusterID);
   }
   for(uint tpcid: topicsInCluster) {
     printf("Topic added to cluster: %d\n", tpcid);
