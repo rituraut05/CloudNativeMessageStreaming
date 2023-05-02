@@ -73,7 +73,8 @@ void setCurrState(State cs, int topicID)
   currStateMap[topicID] = cs;
   mutex_cs.unlock();
   if(cs == LEADER) {
-    // TODO: add topicid to your topics list.
+    // add topicid to your topics list.
+    topicsUnderLeadership.push_back(topicID);
     // TODO: call setLeaderId for guru.
     printf("%s %s %s %s %s %s %s %s %s %s %s %s \n", SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE);
   }
@@ -138,7 +139,7 @@ int BrokerToGuruClient::RequestConfig(int brokerid) {
 BrokerClient::BrokerClient(shared_ptr<Channel> channel)
   : stub_(BrokerServer::NewStub(channel)) {}
 
-int BrokerClient::RequestVote(int lastLogTerm, int lastLogIndex, int followerID, int topicID){
+int BrokerClient::RequestVote(int lastLogTerm, int candLastLogIndex, int followerID, int topicID){
   printf("[RequestVote]: RaftClient invoked\n");
 
   RequestVoteRequest request;
@@ -149,7 +150,7 @@ int BrokerClient::RequestVote(int lastLogTerm, int lastLogIndex, int followerID,
   request.set_term(currentTerm[topicID]);
   request.set_candidateid(serverID);
   request.set_lastlogterm(lastLogTerm);
-  request.set_lastlogindex(lastLogIndex);
+  request.set_lastlogindex(candLastLogIndex);
   request.set_topicid(topicID);
 
   reply.Clear();
@@ -162,7 +163,7 @@ int BrokerClient::RequestVote(int lastLogTerm, int lastLogIndex, int followerID,
       printf("[RequestVote]: BrokerClient - Term of the server %d is higher than %d candidate\n", followerID, serverID);
     }
     if(reply.votegranted()){
-      printf("[RequestVote]: BrokerClient - Server %d granted vote for %d\n",followerID,serverID);
+      printf("[RequestVote]: BrokerClient - Server %d granted vote for %d\n",followerID, serverID);
       return 1;
     }else{
       printf("[RequestVote]: BrokerClient - Server %d did not vote for %d\n",followerID, serverID);
@@ -187,6 +188,23 @@ int getRandomTimeout() {
   default_random_engine generator(seed);
   uniform_int_distribution<int> distribution(MIN_ELECTION_TIMEOUT, MAX_ELECTION_TIMEOUT);
   return distribution(generator);
+}
+
+void invokeRequestVote(BrokerClient* followerClient, int followerID, int topicID){
+  // RequestVote, gather votes
+  // should implement retries of RequestVote on unsuccessful returns
+  int lastLogTerm = 0;
+  if(logs[topicID].size()>0) {
+    lastLogIndex[topicID] = logs[topicID].back().index;
+    lastLogTerm = logs[topicID].back().term;
+  }
+  int ret = followerClient->RequestVote(lastLogTerm, lastLogIndex[topicID], followerID, topicID);
+  if (ret == 1) {
+    mutex_votes.lock();
+    votesReceived[topicID]++;
+    mutex_votes.unlock();
+  }
+  return;
 }
 
 void runElection(int topicID) {
@@ -218,11 +236,30 @@ void runElection(int topicID) {
 
   printf("[runElection] Running Election for topic %d, term=%d\n", topicID, currentTerm[topicID]);
 
-  // TODO: invoke RequestVote threads
+  // invoke RequestVote threads
+  vector<thread> RequestVoteThreads;
+  for(auto si: brokersInCluster) {
+    if(si.second.serverid != serverID) {
 
-  // TODO: wait until all request votes threads have completed.
+      RequestVoteThreads.push_back(thread(invokeRequestVote, si.second.client, si.second.serverid, topicID));
+    }
+  }
 
-  // TODO: call setLeader if majority votes were received.
+ // wait until all request votes threads have completed.
+  for(int i=0; i<RequestVoteThreads.size(); i++){
+    if(RequestVoteThreads[i].joinable()) {
+      RequestVoteThreads[i].join();
+    }
+  }
+  RequestVoteThreads.clear();
+
+  // call setLeader if majority votes were received.
+  int majority = (BROKER_COUNT+1)/2;
+  printf("votesReceived = %d, Majority = %d for topic %d\n", votesReceived[topicID], majority, topicID);
+  if(votesReceived[topicID] >= majority) {
+    printf("Candidate %d received majority of votes from available servers for topic %d\n", serverID, topicID);
+    setCurrState(LEADER, topicID);
+  }
 }
 
 
