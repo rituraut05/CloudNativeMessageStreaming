@@ -16,8 +16,28 @@ service BrokerServer
   rpc ReadMessageStream(ReadMessageRequest) returns (stream ReadMessageResponse) {}
 }
 
-message AppendEntriesRequest { }
-message AppendEntriesResponse { }
+message LogEntry {
+    uint32 index = 1;
+    uint32 term = 2;
+    uint32 topicId = 3;
+    uint32 messageIndex = 4;
+    string message = 5;
+}
+
+message AppendEntriesRequest {
+    uint32 topicId = 1;
+    uint32 term = 2;
+    uint32 leaderId = 3;
+    uint32 prevLogIndex = 4;
+    uint32 prevLogTerm = 5;
+    repeated LogEntry entries = 6;
+    uint32 leaderCommitIndex = 7;
+}
+
+message AppendEntriesResponse {
+    uint32 currTerm = 1;
+    bool success = 2;
+}
 
 message StartElectionRequest {
   uint32 topicId = 1;

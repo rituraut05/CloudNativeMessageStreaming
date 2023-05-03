@@ -37,6 +37,7 @@ using util::Timer;
 #define HEART   "\xE2\x99\xA5"
 #define SPADE   "\xE2\x99\xA0"
 
+#define BROKER_COUNT brokersInCluster.size()
 
 //// Added for testing, remove after getConfig API is written ////
 
@@ -69,10 +70,14 @@ std::shared_mutex mutex_votes; // for votesReceived
 std::shared_mutex mutex_leader; // for leaderID
 std::shared_mutex mutex_cs; // for currState
 std::shared_mutex mutex_er; // for electionRunning
-std::shared_mutex mutex_aer; // for appendEntriesRunning
+std::shared_mutex mutex_logs; // for logs
 std::shared_mutex mutex_ct; // for currentTerm
 std::shared_mutex mutex_la; // for lastApplied
 std::shared_mutex mutex_vf; // for votedFor
+std::shared_mutex mutex_ucif; // for updateCommitIndexFlag
+std::shared_mutex mutex_mi; // for matchIndex
+std::shared_mutex mutex_ni; // for nextIndex
+
 
 
 /*
@@ -90,6 +95,18 @@ unordered_map<int, leveldbPtr> pmetadata;
 * Actual db service 
 */
 unordered_map<int, leveldbPtr> replicateddb;
+
+unordered_map<int, int> commitIndex;
+
+unordered_map<int, bool> updateCommitIndexFlag;
+
+unordered_map<int , bool> sendLogEntries;
+
+unordered_map<int, thread> appendEntriesThreads;
+
+unordered_map<int, unordered_map<int, int>> nextIndex;
+
+unordered_map<int, unordered_map<int, int>> matchIndex;
 
 // ******************************** Log class *********************************
 
@@ -157,5 +174,25 @@ unordered_map<int, vector<Log>> logs;
 // ************************** DPS variables ************************************
 vector<int> topicsInCluster;
 vector<int> topicsUnderLeadership;
+
+// ******************************** Util Functions *********************************
+void printRaftLog() {
+  printf("======================== Raft Log ===========================\n");
+  printf("Index Term  Topic:Logs\n");
+  for(auto& [key, value] : logs) {
+    printf("%d : ", key);
+    for(auto logIt = value.begin(); logIt != value.end(); logIt++) {
+      printf("%s, ", logIt->msg.c_str());
+    }
+    printf("\n");
+  }
+  for(auto& [key, value] : commitIndex) {
+    printf("commit index: %d : %d\n", key, value);
+  }
+  for(auto& [key, value] : currentTerm) {
+    printf("currterm: %d : %d\n", key, value);
+  }
+  printf("=============================================================\n");
+}
 
 #endif

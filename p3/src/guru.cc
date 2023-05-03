@@ -116,7 +116,7 @@ class GuruGrpcServer final : public GuruServer::Service {
       int brokerid = request->serverid();
       int clusterid = request->clusterid();
 
-      printf("Received %s from broker %d in cluster %d\n", HEART, brokerid, clusterid);
+      // printf("Received %s from broker %d in cluster %d\n", HEART, brokerid, clusterid);
 
       brokerAliveTimers[brokerid].reset(BROKER_ALIVE_TIMEOUT);
       if(!brokers[brokerid].alive) {
