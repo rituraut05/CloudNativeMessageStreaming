@@ -32,7 +32,7 @@ class GuruToBrokerClient {
 class BrokerClient {
   public:
     BrokerClient(shared_ptr<Channel> channel);
-    int AppendEntries(int nextIndex, int lastIndex);
+    int AppendEntries(int topicId, int nextIndex, int lastIndex);
     int RequestVote(int lastLogTerm, int lastLogIndex, int followerID, int topicID);
 
   private:
