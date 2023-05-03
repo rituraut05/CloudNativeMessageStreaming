@@ -381,7 +381,8 @@ class BrokerGrpcServer final : public BrokerServer::Service {
       // start election which will trigger requestVote
       using namespace std::chrono;
       auto start = high_resolution_clock::now();
-      std::async(std::launch::async, runElection, topicID);
+      thread tmpthread(runElection, topicID);
+      tmpthread.detach();
       auto stop = high_resolution_clock::now();
       auto duration = duration_cast<microseconds>(stop - start);
       cout << "Time required to start election : " << duration.count() << endl;

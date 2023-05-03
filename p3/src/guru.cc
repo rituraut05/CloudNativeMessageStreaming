@@ -35,7 +35,7 @@ using dps::ServerConfig;
 using util::Timer;
 
 #define BROKER_ALIVE_TIMEOUT    5000
-#define WAIT_FOR_LEADER_TIMEOUT 1.5*MAX_ELECTION_TIMEOUT
+#define WAIT_FOR_LEADER_TIMEOUT 2*MAX_ELECTION_TIMEOUT
 #define HEART   "\xE2\x99\xA5"
 
 // ****************************** Variables ******************************
