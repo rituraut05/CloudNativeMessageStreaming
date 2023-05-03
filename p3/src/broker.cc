@@ -55,7 +55,7 @@ class BrokerToGuruClient {
 uint clusterID;
 uint serverID;
 Timer heartbeatTimer(1, HEARTBEAT_TIMEOUT);
-vector<ServerInfo> brokersInCluster; 
+unordered_map<int, ServerInfo> brokersInCluster;
 BrokerToGuruClient* bgClient;
 
 // *************************** Functions *************************************
@@ -73,7 +73,9 @@ void setCurrState(State cs, int topicID)
   currStateMap[topicID] = cs;
   mutex_cs.unlock();
   if(cs == LEADER) {
-    // TODO: add topicid to your topics list.
+    // add topicid to your topics list.
+    // TODO: add locks
+    topicsUnderLeadership.push_back(topicID);
     // TODO: call setLeaderId for guru.
     printf("%s %s %s %s %s %s %s %s %s %s %s %s \n", SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE);
   }
@@ -121,7 +123,7 @@ int BrokerToGuruClient::RequestConfig(int brokerid) {
     for(ServerConfig sc: response.brokers()) {
       ServerInfo si(sc.serverid(), clusterID, sc.servaddr());
       if(si.serverid != serverID) si.initBrokerClient();
-      brokersInCluster.push_back(si);
+      brokersInCluster[si.serverid] = si;
     }
     topicsInCluster.clear();
     for(uint topicid: response.topics()) {
@@ -134,11 +136,10 @@ int BrokerToGuruClient::RequestConfig(int brokerid) {
   }
 }
 
-
 BrokerClient::BrokerClient(shared_ptr<Channel> channel)
   : stub_(BrokerServer::NewStub(channel)) {}
 
-int BrokerClient::RequestVote(int lastLogTerm, int lastLogIndex, int followerID, int topicID){
+int BrokerClient::RequestVote(int lastLogTerm, int candLastLogIndex, int followerID, int topicID){
   printf("[RequestVote]: RaftClient invoked\n");
 
   RequestVoteRequest request;
@@ -149,7 +150,7 @@ int BrokerClient::RequestVote(int lastLogTerm, int lastLogIndex, int followerID,
   request.set_term(currentTerm[topicID]);
   request.set_candidateid(serverID);
   request.set_lastlogterm(lastLogTerm);
-  request.set_lastlogindex(lastLogIndex);
+  request.set_lastlogindex(candLastLogIndex);
   request.set_topicid(topicID);
 
   reply.Clear();
@@ -162,7 +163,7 @@ int BrokerClient::RequestVote(int lastLogTerm, int lastLogIndex, int followerID,
       printf("[RequestVote]: BrokerClient - Term of the server %d is higher than %d candidate\n", followerID, serverID);
     }
     if(reply.votegranted()){
-      printf("[RequestVote]: BrokerClient - Server %d granted vote for %d\n",followerID,serverID);
+      printf("[RequestVote]: BrokerClient - Server %d granted vote for %d\n",followerID, serverID);
       return 1;
     }else{
       printf("[RequestVote]: BrokerClient - Server %d did not vote for %d\n",followerID, serverID);
@@ -189,14 +190,37 @@ int getRandomTimeout() {
   return distribution(generator);
 }
 
+void invokeRequestVote(BrokerClient* followerClient, int followerID, int topicID){
+  // RequestVote, gather votes
+  // should implement retries of RequestVote on unsuccessful returns
+  int lastLogTerm = 0;
+  if(logs[topicID].size()>0) {
+    lastLogIndex[topicID] = logs[topicID].back().index;
+    lastLogTerm = logs[topicID].back().term;
+  }
+  int ret = followerClient->RequestVote(lastLogTerm, lastLogIndex[topicID], followerID, topicID);
+  if (ret == 1) {
+    mutex_votes.lock();
+    votesReceived[topicID]++;
+    mutex_votes.unlock();
+  }
+  return;
+}
+
 void runElection(int topicID) {
   printf("Hi I have started the runElection async function\n");
 
   // start election timer
-  beginElectionTimer.start(getRandomTimeout());
-  while(beginElectionTimer.running() && 
-    beginElectionTimer.get_tick() < beginElectionTimer._timeout) ; // spin
-  printf("[runElection] Spun for %d ms before timing out in state %d for term %d\n", beginElectionTimer.get_tick(), currStateMap[topicID], currentTerm[topicID]);
+  // TODO: Add locks for beginElectionTimer
+  beginElectionTimer[topicID] = Timer(1, MAX_ELECTION_TIMEOUT);
+  beginElectionTimer[topicID].set_running(true);
+  beginElectionTimer[topicID].start(getRandomTimeout());
+
+  while(beginElectionTimer[topicID].running() && beginElectionTimer[topicID].get_tick() < beginElectionTimer[topicID]._timeout) ; // spin
+
+  if(!beginElectionTimer[topicID].running()) return;
+  
+  printf("[runElection] Spun for %d ms before timing out in state %d for term %d\n", beginElectionTimer[topicID].get_tick(), stateNames[currStateMap[topicID]].c_str(), currentTerm[topicID]);
 
   // invoke requestVote on other alive brokers.
   mutex_votes.lock();
@@ -219,11 +243,31 @@ void runElection(int topicID) {
 
   printf("[runElection] Running Election for topic %d, term=%d\n", topicID, currentTerm[topicID]);
 
-  // TODO: invoke RequestVote threads
+  // invoke RequestVote threads
+  vector<thread> RequestVoteThreads;
+  for(auto si: brokersInCluster) {
+    if(si.second.serverid != serverID) {
 
-  // TODO: wait until all request votes threads have completed.
+      RequestVoteThreads.push_back(thread(invokeRequestVote, si.second.client, si.second.serverid, topicID));
+    }
+  }
 
-  // TODO: call setLeader if majority votes were received.
+ // wait until all request votes threads have completed.
+  for(int i=0; i<RequestVoteThreads.size(); i++){
+    if(RequestVoteThreads[i].joinable()) {
+      RequestVoteThreads[i].join();
+    }
+  }
+  RequestVoteThreads.clear();
+
+  beginElectionTimer[topicID].set_running(false);
+  // call setLeader if majority votes were received.
+  int majority = (BROKER_COUNT+1)/2;
+  printf("votesReceived = %d, Majority = %d for topic %d\n", votesReceived[topicID], majority, topicID);
+  if(votesReceived[topicID] >= majority) {
+    printf("Candidate %d received majority of votes from available servers for topic %d\n", serverID, topicID);
+    setCurrState(LEADER, topicID);
+  }
 }
 
 
@@ -296,6 +340,7 @@ class BrokerGrpcServer final : public BrokerServer::Service {
         if(llt > voter_llt || (llt == voter_llt && lli >= voter_lli)) { // candidate has longer log than voter or ..
           resp->set_term(ctLocal); 
           resp->set_votegranted(true);
+          beginElectionTimer[topicID].set_running(false);
           // electionTimer.reset(getRandomTimeout());
           printf("llt = %d \nvoter_llt = %d \nlli = %d \nvoter_lli = %d\n", llt, voter_llt, lli, voter_lli);
           printf("VOTED!: Candidate has longer log than me\n");
@@ -333,12 +378,13 @@ class BrokerGrpcServer final : public BrokerServer::Service {
     {
       int topicID = req->topicid();
       // start election which will trigger requestVote
+      using namespace std::chrono;
+      auto start = high_resolution_clock::now();
       std::async(std::launch::async, runElection, topicID);
-      /*
-      // test the above otherwise replace it with the below
-      // runElectionThread = thread { runElection, topicID}; 
-      // TODO: Join this thread appropriately.
-      */
+      auto stop = high_resolution_clock::now();
+      auto duration = duration_cast<microseconds>(stop - start);
+      cout << "Time required to start election : " << duration.count() << endl;
+
       return Status::OK;
     }
 };
@@ -392,8 +438,8 @@ int main(int argc, char* argv[]) {
 
   int rc_ret = bgClient->RequestConfig(serverID);
   assert(rc_ret == 0);
-  for(ServerInfo si: brokersInCluster) {
-    printf("Broker: %d in Cluster: %d\n", si.serverid, clusterID);
+  for(auto si: brokersInCluster) {
+    printf("Broker: %d-%s in Cluster: %d\n", si.first, si.second.server_name.c_str(), clusterID);
   }
   for(uint tpcid: topicsInCluster) {
     printf("Topic added to cluster: %d\n", tpcid);

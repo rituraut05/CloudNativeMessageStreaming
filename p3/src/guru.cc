@@ -3,8 +3,9 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include <shared_mutex>
 
-#include "timer.hh"
+#include "utils.hh"
 #include "common.hh"
 #include "dps.grpc.pb.h"
 
@@ -21,6 +22,7 @@ using std::unique_ptr;
 using std::vector;
 using std::thread;
 using std::unordered_map;
+using std::shared_mutex;
 using dps::BrokerServer;
 using dps::GuruServer;
 using dps::HeartbeatRequest;
@@ -33,30 +35,74 @@ using dps::ServerConfig;
 using util::Timer;
 
 #define BROKER_ALIVE_TIMEOUT    5000
+#define WAIT_FOR_LEADER_TIMEOUT 1.5*MAX_ELECTION_TIMEOUT
 #define HEART   "\xE2\x99\xA5"
 
 // ****************************** Variables ******************************
 
 int cluster_cnt = 0;
+
+// brokerid - Timer with BROKER_ALIVE_TIMEOUT
 unordered_map<int, Timer> brokerAliveTimers;
 
+// topicid - Timer with WAIT_FOR_LEADER_TIMEOUT
+unordered_map<int, Timer> waitForElectionTimers;
+
 vector<Cluster> clusters; // persist
+// brokerid - ServerInfo
 unordered_map<int, ServerInfo> brokers; // persist
 
+// topicid - clusterid
 unordered_map<int, int> topicToClusterMap; // persist
+// topicid - leaderid (brokerid)
 unordered_map<int, int> topicToLeaderMap; // persist
+// leaderid (brokerid) - list of topic ids under its leadership
 unordered_map<int, vector<int>> leaderToTopicsMap;
+// publisherid - list of topics it sends messages to
 unordered_map<int, vector<int>> publisherToTopicsMap; // required?
+// subscriberid - list of topics it consumes messages from
 unordered_map<int, vector<int>> subscriberToTopicsMap;
+
+shared_mutex mutex_tlm; // lock for topicToLeaderMap
 
 // **************************** Functions ********************************
 
 void invokeStartElection(int bid, int topicID) {
   int ret = brokers[bid].gbClient->StartElection(topicID);
   if(ret == 0) {
-    printf("Election started successfully for topic %d at broker %s %d\n", topicID, brokers[bid].server_name, bid);
+    printf("[invokeStartElection] Election started successfully for topic %d at broker %s %d\n", topicID, brokers[bid].server_name.c_str(), bid);
   } else {
-    printf("Failure in starting election for topic %d at broker %s %d\n", topicID, brokers[bid].server_name, bid);
+    printf("[invokeStartElection] Failure in starting election for topic %d at broker %s %d\n", topicID, brokers[bid].server_name.c_str(), bid);
+  }
+}
+
+void checkLeaderElections() {
+  while(true) {
+    mutex_tlm.lock();
+    for(auto tl: topicToLeaderMap) {
+      uint topicid = tl.first;
+      uint leaderid = tl.second;
+      if(leaderid == -1 && 
+        waitForElectionTimers.find(topicid) != waitForElectionTimers.end() &&
+        waitForElectionTimers[topicid].get_tick() > WAIT_FOR_LEADER_TIMEOUT) { // retrigger election
+        waitForElectionTimers[topicid].reset(WAIT_FOR_LEADER_TIMEOUT);
+        Cluster clusterOwningTopic;
+        for(Cluster c: clusters) {
+          if(c.clusterid == topicToClusterMap[topicid]) {
+            clusterOwningTopic = c;
+            break;
+          }
+        }
+        for(uint brokeridInCluster: clusterOwningTopic.brokers) {
+          if(brokers[brokeridInCluster].alive) {
+            printf("[CheckLeaderElections] Re-running election for topic %d in broker %d in cluster %d\n", topicid, brokeridInCluster, clusterOwningTopic.clusterid);
+            thread tmpthread(invokeStartElection, brokeridInCluster, topicid);
+            tmpthread.detach();
+          }
+        }
+      }
+    }
+    mutex_tlm.unlock();
   }
 }
 
@@ -87,20 +133,21 @@ class GuruGrpcServer final : public GuruServer::Service {
               brokers[servid].alive = false;
               for(int topicid: leaderToTopicsMap[servid]) {
                 printf("[SendHeartbeat] Triggering election for topic %d in cluster %d.\n", topicid, c.clusterid);
-                vector<thread> startElectionThreads;
                 for(uint bid: c.brokers) {
                   if(bid != servid) {
-                    startElectionThreads.push_back(thread(invokeStartElection, bid, topicid));
+                    thread tmpthread(invokeStartElection, bid, topicid);
+                    tmpthread.detach();
+                    if(waitForElectionTimers.find(topicid) == waitForElectionTimers.end())
+                      waitForElectionTimers[topicid] = Timer(1, WAIT_FOR_LEADER_TIMEOUT);
+                    else
+                      waitForElectionTimers[topicid].reset(WAIT_FOR_LEADER_TIMEOUT);
                   }
                 }
-                for(int i=0; i<startElectionThreads.size(); i++) {
-                  startElectionThreads[i].join();
-                }
-                startElectionThreads.clear();
-                // TODO: add this topic to temporary set of topics for which election is started.
-                // TODO: update topicToLeaderMap[topicID] = -1
+                mutex_tlm.lock();
+                topicToLeaderMap[topicid] = -1;
+                mutex_tlm.unlock();
               }
-              // TODO: remove the servid from leaderToTopicsMap
+              leaderToTopicsMap[servid].clear();
             }
           }
         }
@@ -181,16 +228,20 @@ int main(int argc, char* argv[]) {
   Cluster c0(0);
   ServerInfo s0(0, 0, "0.0.0.0:50051");
   ServerInfo s1(1, 0, "0.0.0.0:50052");
+  ServerInfo s2(2, 0, "0.0.0.0:50053");
   s0.initGuruToBrokerClient();
   s1.initGuruToBrokerClient();
+  s2.initGuruToBrokerClient();
   c0.addBroker(s0.serverid);
   c0.addBroker(s1.serverid);
+  c0.addBroker(s2.serverid);
   c0.addTopic(1);
   c0.addTopic(2);
   clusters.push_back(c0);
   brokers[s0.serverid] = s0;
   brokers[s1.serverid] = s1;
-  for(int j = 0; j<2; j++) {
+  brokers[s2.serverid] = s2;
+  for(int j = 0; j<3; j++) {
     brokerAliveTimers[j] = Timer(1, BROKER_ALIVE_TIMEOUT);
   }
   c0.print();
@@ -200,6 +251,8 @@ int main(int argc, char* argv[]) {
   leaderToTopicsMap[1] = topicsOfLeader1;
   // ---------------------------------------------
 
+  thread checkLeaderElectionsThread(checkLeaderElections);
   RunGrpcServer(GURU_ADDRESS);
+  if(checkLeaderElectionsThread.joinable()) checkLeaderElectionsThread.join();
   return 0;
 }
