@@ -32,6 +32,8 @@ using dps::HeartbeatRequest;
 using dps::HeartbeatResponse;
 using dps::RequestVoteRequest;
 using dps::RequestVoteResponse;
+using dps::SetLeaderRequest;
+using dps::SetLeaderResponse;
 using dps::StartElectionRequest;
 using dps::StartElectionResponse;
 using dps::ClusterConfigRequest;
@@ -47,7 +49,7 @@ using util::Timer;
 class BrokerToGuruClient {
   public:
     BrokerToGuruClient(shared_ptr<Channel> guruchannel);
-    int SetLeader();
+    int SetLeader(int topicid);
     int SendHeartbeat();
     int RequestConfig(int brokerid);
 
@@ -122,6 +124,7 @@ void setCurrState(int topicId, State cs)
     // TODO: add locks
     topicsUnderLeadership.push_back(topicId);
     // TODO: call setLeaderId for guru.
+    bgClient->SetLeader(topicId);
     printf("%s %s %s %s %s %s %s %s %s %s %s %s \n", SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE);
   }
   printf("Server %d = %s for term = %d\n", serverID, stateNames[cs].c_str(), currentTerm[topicId]);
@@ -176,6 +179,26 @@ int BrokerToGuruClient::RequestConfig(int brokerid) {
     return 0;
   } else {
     printf("[RequestConfig] Unable to fetch cluster config, please retry.\n");
+    return -1;
+  }
+}
+
+int BrokerToGuruClient::SetLeader(int topicID) {
+  SetLeaderRequest request;
+  SetLeaderResponse response;
+  Status status;
+  ClientContext context;
+
+  request.set_leaderid(serverID);
+  request.set_topicid(topicID);
+  response.Clear();
+  status = gurustub_->SetLeader(&context, request, &response);
+
+  if(status.ok()) {
+    printf("[SetLeader RPC]: Successfully set leaderID %d at Guru for topic %d\n", serverID, topicID);
+    return 0;
+  } else {
+    printf("[SetLeader RPC] Failure.\n");
     return -1;
   }
 }
@@ -400,7 +423,7 @@ void runElection(int topicID) {
 
   if(!beginElectionTimer[topicID].running()) return;
   
-  printf("[runElection] Spun for %d ms before timing out in state %d for term %d\n", beginElectionTimer[topicID].get_tick(), stateNames[currStateMap[topicID]].c_str(), currentTerm[topicID]);
+  printf("[runElection] Spun for %d ms before timing out in state %s for term %d\n", beginElectionTimer[topicID].get_tick(), stateNames[currStateMap[topicID]].c_str(), currentTerm[topicID]);
 
   // invoke requestVote on other alive brokers.
   mutex_votes.lock();

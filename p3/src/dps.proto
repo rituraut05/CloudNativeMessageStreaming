@@ -86,7 +86,10 @@ message SubscribeResponse { }
 message AddTopicRequest { }
 message AddTopicResponse { }
 
-message SetLeaderRequest { }
+message SetLeaderRequest {
+  uint32 leaderid = 1;
+  uint32 topicid = 2;
+}
 message SetLeaderResponse { }
 
 message HeartbeatRequest {
