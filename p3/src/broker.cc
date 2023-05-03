@@ -80,6 +80,38 @@ bool greaterThanMajority(unordered_map<int, int> map, int N) {
   return true;
 }
 
+void checkAndUpdateCommitIndex() {
+  // check and update commit index 
+  while(true){
+    for(int topicId : topicsUnderLeadership) {
+      mutex_lli.lock();
+      int lliLocal = lastLogIndex[topicId];
+      mutex_lli.unlock();
+      mutex_mi.lock();
+      matchIndex[topicId][serverID] = lliLocal;
+      unordered_map<int, int> matchIndexLocal = matchIndex[topicId];
+      mutex_mi.unlock();
+      
+      mutex_ci.lock();
+      mutex_ucif.lock();
+      for(int N = lliLocal; N>commitIndex[topicId]; N--) {
+        auto NLogIndexIt = logs[topicId].end();
+        for(; NLogIndexIt != logs[topicId].begin(); NLogIndexIt--) {
+          if(NLogIndexIt->index == N) break;
+        }
+        if(greaterThanMajority(matchIndexLocal, N) && NLogIndexIt->term == currentTerm[topicId]) {
+          printf("[runRaftServer] LEADER: Commiting index = %d\n", N);
+          commitIndex[topicId] = N;
+          updateCommitIndexFlag[topicId] = true;
+          break;
+        }
+      }
+      mutex_ucif.unlock();
+      mutex_ci.unlock();
+    }
+  }
+}
+
 void setCurrState(int topicId, State cs)
 {
   mutex_cs.lock();
@@ -194,6 +226,14 @@ void invokeAppendEntries(int followerid) {
         int lastidx = lli_local;
         status = sendAppendEntriesRpc(followerid, topicId, ni_local, lastidx);
       }
+      mutex_ucif.lock();
+      if(updateCommitIndexFlag[topicId]) {
+        printf("[invokeAppendEntries]sending rpc for updatecommitindex: %d\n", topicId);
+        int lastidx = -1;
+        status = sendAppendEntriesRpc(followerid, topicId, ni_local, lastidx);
+        updateCommitIndexFlag[topicId] = false;
+      }
+      mutex_ucif.unlock();
       if(status == -1) break;
     }
   }
@@ -706,7 +746,9 @@ int main(int argc, char* argv[]) {
     appendEntriesThreads[brokerId.first] = thread { invokeAppendEntries, brokerId.first }; 
   }
 
+  thread updateCommitIndex(checkAndUpdateCommitIndex);
   RunGrpcServer(brokersInCluster[serverID].server_addr);
   if(heartbeat.joinable()) heartbeat.join();
+  if(updateCommitIndex.joinable()) updateCommitIndex.join();
   return 0;
 }
