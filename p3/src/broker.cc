@@ -74,7 +74,7 @@ void runHeartbeatTimer() {
 }
 
 bool greaterThanMajority(unordered_map<int, int> map, int N) {
-  int majcnt = (BROKER_COUNT+1)/2;
+  int majcnt = (int)((BROKER_COUNT+1)/2);
   for(auto& [key, value] : map) {
     if(value >= N) majcnt--;
   }
@@ -469,13 +469,14 @@ void invokeRequestVote(BrokerClient* followerClient, int followerID, int topicID
 }
 
 void runElection(int topicID) {
-  printf("Hi I have started the runElection async function\n");
+  printf("Hi I have started the runElection async function for topic %d\n", topicID);
 
   // start election timer
   // TODO: Add locks for beginElectionTimer
   beginElectionTimer[topicID] = Timer(1, MAX_ELECTION_TIMEOUT);
   beginElectionTimer[topicID].set_running(true);
   beginElectionTimer[topicID].start(getRandomTimeout());
+  printf("Should spin for topicid %d for %d ms\n", topicID, beginElectionTimer[topicID]._timeout);
 
   while(beginElectionTimer[topicID].running() && beginElectionTimer[topicID].get_tick() < beginElectionTimer[topicID]._timeout) ; // spin
 
@@ -523,7 +524,7 @@ void runElection(int topicID) {
 
   beginElectionTimer[topicID].set_running(false);
   // call setLeader if majority votes were received.
-  int majority = (BROKER_COUNT+1)/2;
+  int majority = (int)((BROKER_COUNT+1)/2);
   printf("votesReceived = %d, Majority = %d for topic %d\n", votesReceived[topicID], majority, topicID);
   if(votesReceived[topicID] >= majority) {
     printf("Candidate %d received majority of votes from available servers for topic %d\n", serverID, topicID);
@@ -820,22 +821,24 @@ int main(int argc, char* argv[]) {
   lastApplied[2] = -1;
   lastApplied[1] = -1;
 
-  if(serverID == 0) 
-    test_log();
+  if(serverID == 0) ;
+    // test_log();
   else setCurrState(1, FOLLOWER);
+
+  // NOTE: initialize lastlogindex and nextIndex and matchIndex 
 
   for(auto& brokerId : brokersInCluster) {
     // printf("[runRaftServer] Starting AppendEntriesInvoker for term = %d\n", ctLocal);
     if(brokerId.first == serverID) break;
     sendLogEntries[brokerId.first] = true;
-    appendEntriesThreads[brokerId.first] = thread { invokeAppendEntries, brokerId.first }; 
+    // appendEntriesThreads[brokerId.first] = thread { invokeAppendEntries, brokerId.first }; 
   }
 
-  thread updateCommitIndex(checkAndUpdateCommitIndex);
-  thread addToMessageQ(executeLog);
+  // thread updateCommitIndex(checkAndUpdateCommitIndex);
+  // thread addToMessageQ(executeLog);
   RunGrpcServer(brokersInCluster[serverID].server_addr);
   if(heartbeat.joinable()) heartbeat.join();
-  if(updateCommitIndex.joinable()) updateCommitIndex.join();
-  if(addToMessageQ.joinable()) addToMessageQ.join();
+  // if(updateCommitIndex.joinable()) updateCommitIndex.join();
+  // if(addToMessageQ.joinable()) addToMessageQ.join();
   return 0;
 }
