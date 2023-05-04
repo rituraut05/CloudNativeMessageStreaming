@@ -112,6 +112,64 @@ void checkAndUpdateCommitIndex() {
   }
 }
 
+void executeLog() {
+  while(true) {
+    mutex_ci.lock();
+    unordered_map<int, int> commitIndexLocal = commitIndex;
+    mutex_ci.unlock();
+    mutex_la.lock();
+    unordered_map<int, int> lastAppliedLocal = lastApplied;
+    mutex_la.unlock();
+    for(int topicId : topicsInCluster){
+      vector<string> new_messages;
+      if(lastAppliedLocal[topicId] < commitIndexLocal[topicId]) {
+        printf("[ExecuteLog]: Executing log (size = %d) for TOPIC %d from index: %d\n", logs[topicId].size(), topicId, lastAppliedLocal[topicId]+1); 
+        
+        // This can happen when we have erased till min(matchIndex) which have not yet applied
+        // if(i== logs.end()){
+        //   printf("[ExecuteLog]: Unable to find %d index in logs\n", lastApplied+1);
+        //   continue;
+        //   // TODO: if such case arises. Find in DB as well.
+        // }
+        // int i = lastAppliedLocal[topicId]+1;
+        // while(i!=logs[topicId].size() && i <= commitIndexLocal[topicId]) {
+        //   // put to replicateddb
+        //   // leveldb::Status status = replicateddb->Put(leveldb::WriteOptions(), logs[topicId][i]);
+        //   // if(!status.ok()){
+        //   //   printf("[ExecuteLog]: Failure while put in replicated db %s\n", status.ToString().c_str());
+        //   //   break;
+        //   // }
+        //   printf("log entry: %s",logs[topicId][i].msg.c_str());
+        //   new_messages.push_back(logs[topicId][i].msg);
+        //   lastAppliedLocal[topicId]++;
+        //   // pmetadata->Put(leveldb::WriteOptions(), "lastApplied", to_string(lastApplied));
+        //   i++;
+        // }
+
+        for(int i = lastAppliedLocal[topicId]+1; i < logs[topicId].size(); i++){
+          if(i <= commitIndexLocal[topicId]){
+            new_messages.push_back(logs[topicId][i].msg);
+            lastAppliedLocal[topicId]++;
+          }
+        }
+      }
+      // update
+      if(new_messages.size() > 0){
+        cout << new_messages.size() << endl;
+        mutex_messageQ.lock();
+        messageQ[topicId].insert(messageQ[topicId].end(), new_messages.begin(), new_messages.end());
+        mutex_messageQ.unlock();
+        mutex_la.lock();
+        lastApplied[topicId] = lastAppliedLocal[topicId];
+        mutex_la.unlock();
+        for(auto& msg : messageQ[topicId]){
+          cout << topicId << ": " << msg << ";\n";
+        } 
+      }
+    }
+  }
+}
+
 void setCurrState(int topicId, State cs)
 {
   mutex_cs.lock();
@@ -733,7 +791,10 @@ int main(int argc, char* argv[]) {
   openOrCreateDBs();
   thread heartbeat(runHeartbeatTimer);
   currentTerm[1] = 1;
+  commitIndex[2] = -1;
   commitIndex[1] = -1;
+  lastApplied[2] = -1;
+  lastApplied[1] = -1;
 
   if(serverID == 0) 
     test_log();
@@ -747,8 +808,10 @@ int main(int argc, char* argv[]) {
   }
 
   thread updateCommitIndex(checkAndUpdateCommitIndex);
+  thread addToMessageQ(executeLog);
   RunGrpcServer(brokersInCluster[serverID].server_addr);
   if(heartbeat.joinable()) heartbeat.join();
   if(updateCommitIndex.joinable()) updateCommitIndex.join();
+  if(addToMessageQ.joinable()) addToMessageQ.join();
   return 0;
 }

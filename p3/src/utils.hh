@@ -70,13 +70,15 @@ std::shared_mutex mutex_votes; // for votesReceived
 std::shared_mutex mutex_leader; // for leaderID
 std::shared_mutex mutex_cs; // for currState
 std::shared_mutex mutex_er; // for electionRunning
-std::shared_mutex mutex_logs; // for logs
 std::shared_mutex mutex_ct; // for currentTerm
 std::shared_mutex mutex_la; // for lastApplied
 std::shared_mutex mutex_vf; // for votedFor
 std::shared_mutex mutex_ucif; // for updateCommitIndexFlag
 std::shared_mutex mutex_mi; // for matchIndex
 std::shared_mutex mutex_ni; // for nextIndex
+std::shared_mutex mutex_logs; // for logs
+std::shared_mutex mutex_messageQ; // for messageQueue
+
 
 
 
@@ -170,6 +172,7 @@ unordered_map<int, int> currentTerm;
 unordered_map<int, int> lastApplied;
 unordered_map<int, int> votedFor;
 unordered_map<int, vector<Log>> logs;
+unordered_map<int, vector<string>> messageQ;
 
 // ************************** DPS variables ************************************
 vector<int> topicsInCluster;
