@@ -45,14 +45,16 @@ target_link_libraries(publisher
   hw_grpc_proto
   ${_REFLECTION}
   ${_GRPC_GRPCPP}
-  ${_PROTOBUF_LIBPROTOBUF})
+  ${_PROTOBUF_LIBPROTOBUF}
+  leveldb)
 
 add_executable(subscriber subscriber.cc)
 target_link_libraries(subscriber
   hw_grpc_proto
   ${_REFLECTION}
   ${_GRPC_GRPCPP}
-  ${_PROTOBUF_LIBPROTOBUF})
+  ${_PROTOBUF_LIBPROTOBUF}
+  leveldb)
 
 add_executable(broker broker.cc timer.cc)
 target_link_libraries(broker
