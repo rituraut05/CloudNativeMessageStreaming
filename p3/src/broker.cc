@@ -85,7 +85,10 @@ bool greaterThanMajority(unordered_map<int, int> map, int N) {
 void checkAndUpdateCommitIndex() {
   // check and update commit index 
   while(true){
-    for(int topicId : topicsUnderLeadership) {
+    mutex_tul.lock();
+    vector<int> tulLocal = topicsUnderLeadership;
+    mutex_tul.unlock();
+    for(int topicId : tulLocal) {
       mutex_lli.lock();
       int lliLocal = lastLogIndex[topicId];
       mutex_lli.unlock();
@@ -180,7 +183,20 @@ void setCurrState(int topicId, State cs)
   if(cs == LEADER) {
     // add topicid to your topics list.
     // TODO: add locks
+    mutex_lli.lock();
+    mutex_ni.lock();
+    mutex_mi.lock();
+    for(auto& [brokerId, si] : brokersInCluster) {
+      nextIndex[topicId].insert(std::make_pair(brokerId, 0));
+      matchIndex[topicId].insert(std::make_pair(brokerId, -1));
+      lastLogIndex[topicId] = -1;
+    }
+    mutex_mi.unlock();
+    mutex_ni.unlock();
+    mutex_lli.unlock();
+    mutex_tul.lock();
     topicsUnderLeadership.push_back(topicId);
+    mutex_tul.unlock();
     // TODO: call setLeaderId for guru.
     bgClient->SetLeader(topicId);
     printf("%s %s %s %s %s %s %s %s %s %s %s %s \n", SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE);
@@ -291,9 +307,14 @@ int sendAppendEntriesRpc(int followerid, int topicId, int nextIndexLocal, int la
 }
 
 void invokeAppendEntries(int followerid) {
+  printf("[invokeAppendEntries] Starting thread for brokerID: %d\n", followerid);
   while(true) {
     int status = 0;
-    for(int topicId: topicsUnderLeadership){
+    mutex_tul.lock();
+    vector<int> tulLocal = topicsUnderLeadership;
+    mutex_tul.unlock();
+    for(int topicId: tulLocal){
+      // printf("[invokeAppendEntries] Entering for topicID: %d and followerId: %d!\n", topicId, followerid);
       mutex_lli.lock();
       mutex_ni.lock();
       int lli_local = lastLogIndex[topicId];
@@ -592,7 +613,7 @@ class BrokerGrpcServer final : public BrokerServer::Service {
       // else if(term == ctLocal){ // that means someBody has already sent the requestVote as it has already seen this term     
       mutex_vf.lock();
       if(votedFor[topicID] == -1 || votedFor[topicID] == candidateID) {
-        int voter_lli = 0;
+        int voter_lli = -1;
         int voter_llt = 0;
         if(logs[topicID].size()>0){
           voter_lli = logs[topicID].back().index;
@@ -650,9 +671,7 @@ class BrokerGrpcServer final : public BrokerServer::Service {
 
       return Status::OK;
     }
-    
-// ***************************** Broker(Raft)Server Code *****************************
-    
+        
   Status AppendEntries(ServerContext *context, const AppendEntriesRequest *request, AppendEntriesResponse *response) override
   {
     printf("[Broker(Raft)Server:AppendEntries]Received RPC!\n");
@@ -806,6 +825,11 @@ int main(int argc, char* argv[]) {
   }
   for(uint tpcid: topicsInCluster) {
     printf("Topic added to cluster: %d\n", tpcid);
+    for(auto& [brokerId, si] : brokersInCluster) {
+      nextIndex[tpcid].insert(std::make_pair(brokerId, 0));
+      matchIndex[tpcid].insert(std::make_pair(brokerId, -1));
+      lastLogIndex[tpcid] = -1;
+    }
   }
 
   /*
@@ -829,16 +853,16 @@ int main(int argc, char* argv[]) {
 
   for(auto& brokerId : brokersInCluster) {
     // printf("[runRaftServer] Starting AppendEntriesInvoker for term = %d\n", ctLocal);
-    if(brokerId.first == serverID) break;
+    if(brokerId.first == serverID) continue;
     sendLogEntries[brokerId.first] = true;
-    // appendEntriesThreads[brokerId.first] = thread { invokeAppendEntries, brokerId.first }; 
+    appendEntriesThreads[brokerId.first] = thread { invokeAppendEntries, brokerId.first }; 
   }
 
-  // thread updateCommitIndex(checkAndUpdateCommitIndex);
-  // thread addToMessageQ(executeLog);
+  thread updateCommitIndex(checkAndUpdateCommitIndex);
+  thread addToMessageQ(executeLog);
   RunGrpcServer(brokersInCluster[serverID].server_addr);
   if(heartbeat.joinable()) heartbeat.join();
-  // if(updateCommitIndex.joinable()) updateCommitIndex.join();
-  // if(addToMessageQ.joinable()) addToMessageQ.join();
+  if(updateCommitIndex.joinable()) updateCommitIndex.join();
+  if(addToMessageQ.joinable()) addToMessageQ.join();
   return 0;
 }

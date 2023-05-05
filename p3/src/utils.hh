@@ -78,6 +78,7 @@ std::shared_mutex mutex_mi; // for matchIndex
 std::shared_mutex mutex_ni; // for nextIndex
 std::shared_mutex mutex_logs; // for logs
 std::shared_mutex mutex_messageQ; // for messageQueue
+std::shared_mutex mutex_tul; // for topicsUnderLeadership
 
 
 
