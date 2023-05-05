@@ -121,13 +121,13 @@ class GuruGrpcServer final : public GuruServer::Service {
 
       // printf("Received %s from broker %d in cluster %d\n", HEART, brokerid, clusterid);
 
-      printf("Topics under leadership of broker %d:\n", brokerid);
-      mutex_ltm.lock();
-      for(uint topicid: leaderToTopicsMap[brokerid]) {
-        printf("%d ", topicid);
-      }
-      printf("\n");
-      mutex_ltm.unlock();
+      // printf("Topics under leadership of broker %d:\n", brokerid);
+      // mutex_ltm.lock();
+      // for(uint topicid: leaderToTopicsMap[brokerid]) {
+      //   printf("%d ", topicid);
+      // }
+      // printf("\n");
+      // mutex_ltm.unlock();
 
       brokerAliveTimers[brokerid].reset(BROKER_ALIVE_TIMEOUT);
       if(!brokers[brokerid].alive) {
@@ -194,6 +194,11 @@ class GuruGrpcServer final : public GuruServer::Service {
       for(uint tpcid: config.topics) {
         response->add_topics(tpcid);
       }
+      mutex_ltm.lock();
+      for(uint tpcid: leaderToTopicsMap[brokerid]) {
+        response->add_leadingtopics(tpcid);
+      }
+      mutex_ltm.unlock();
       return Status::OK;
     }
 

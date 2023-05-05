@@ -129,28 +129,6 @@ void executeLog() {
       vector<string> new_messages;
       if(lastAppliedLocal[topicId] < commitIndexLocal[topicId]) {
         printf("[ExecuteLog]: Executing log (size = %d) for TOPIC %d from index: %d\n", logs[topicId].size(), topicId, lastAppliedLocal[topicId]+1); 
-        
-        // This can happen when we have erased till min(matchIndex) which have not yet applied
-        // if(i== logs.end()){
-        //   printf("[ExecuteLog]: Unable to find %d index in logs\n", lastApplied+1);
-        //   continue;
-        //   // TODO: if such case arises. Find in DB as well.
-        // }
-        // int i = lastAppliedLocal[topicId]+1;
-        // while(i!=logs[topicId].size() && i <= commitIndexLocal[topicId]) {
-        //   // put to replicateddb
-        //   // leveldb::Status status = replicateddb->Put(leveldb::WriteOptions(), logs[topicId][i]);
-        //   // if(!status.ok()){
-        //   //   printf("[ExecuteLog]: Failure while put in replicated db %s\n", status.ToString().c_str());
-        //   //   break;
-        //   // }
-        //   printf("log entry: %s",logs[topicId][i].msg.c_str());
-        //   new_messages.push_back(logs[topicId][i].msg);
-        //   lastAppliedLocal[topicId]++;
-        //   // pmetadata->Put(leveldb::WriteOptions(), "lastApplied", to_string(lastApplied));
-        //   i++;
-        // }
-
         for(int i = lastAppliedLocal[topicId]+1; i < logs[topicId].size(); i++){
           if(i <= commitIndexLocal[topicId]){
             new_messages.push_back(logs[topicId][i].msg);
@@ -166,10 +144,11 @@ void executeLog() {
         mutex_messageQ.unlock();
         mutex_la.lock();
         lastApplied[topicId] = lastAppliedLocal[topicId];
+        pmetadata[topicId]->Put(leveldb::WriteOptions(), "lastApplied", to_string(lastApplied[topicId]));
         mutex_la.unlock();
-        for(auto& msg : messageQ[topicId]){
-          cout << topicId << ": " << msg << ";\n";
-        } 
+        // for(auto& msg : messageQ[topicId]){
+        //   cout << topicId << ": " << msg << ";\n";
+        // } 
       }
     }
   }
@@ -183,25 +162,25 @@ void setCurrState(int topicId, State cs)
   if(cs == LEADER) {
     // add topicid to your topics list.
     // TODO: add locks
-    mutex_lli.lock();
     mutex_ni.lock();
     mutex_mi.lock();
     for(auto& [brokerId, si] : brokersInCluster) {
-      nextIndex[topicId].insert(std::make_pair(brokerId, 0));
-      matchIndex[topicId].insert(std::make_pair(brokerId, -1));
-      lastLogIndex[topicId] = -1;
+      nextIndex[topicId][brokerId] = lastLogIndex[topicId] + 1;
+      if(brokerId == serverID) {
+        matchIndex[topicId][brokerId] = lastLogIndex[topicId];
+      } else {
+        matchIndex[topicId][brokerId] = -1;
+      }
     }
     mutex_mi.unlock();
     mutex_ni.unlock();
-    mutex_lli.unlock();
     mutex_tul.lock();
-    topicsUnderLeadership.push_back(topicId);
+    if(std::find(topicsUnderLeadership.begin(), topicsUnderLeadership.end(), topicId) == topicsUnderLeadership.end())
+      topicsUnderLeadership.push_back(topicId);
     mutex_tul.unlock();
-    // TODO: call setLeaderId for guru.
-    bgClient->SetLeader(topicId);
     printf("%s %s %s %s %s %s %s %s %s %s %s %s \n", SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE,SPADE);
   }
-  printf("Server %d = %s for term = %d\n", serverID, stateNames[cs].c_str(), currentTerm[topicId]);
+  printf("Server %d = %s for term = %d and topic = %d\n", serverID, stateNames[cs].c_str(), currentTerm[topicId], topicId);
 }
 
 BrokerToGuruClient::BrokerToGuruClient(shared_ptr<Channel> guruchannel)
@@ -250,6 +229,12 @@ int BrokerToGuruClient::RequestConfig(int brokerid) {
     for(uint topicid: response.topics()) {
       topicsInCluster.push_back(topicid);
     }
+    mutex_tul.lock();
+    topicsUnderLeadership.clear();
+    for(uint topicid: response.leadingtopics()) {
+      topicsUnderLeadership.push_back(topicid);
+    }
+    mutex_tul.unlock();
     return 0;
   } else {
     printf("[RequestConfig] Unable to fetch cluster config, please retry.\n");
@@ -296,7 +281,6 @@ int sendAppendEntriesRpc(int followerid, int topicId, int nextIndexLocal, int la
     nextIndex[topicId][followerid]--;
   } else if(ret == -3) { // term of follower bigger, convert to follower
     printf("[sendAppendEntriesRpc] AppendEntries failure; Follower (%d) has bigger term (new term = %d), converting to follower.\n", followerid, currentTerm.at(topicId));
-    // pmetadata->Put(leveldb::WriteOptions(), "currentTerm", to_string(currentTerm));
     sendLogEntries[followerid] = true;
     setCurrState(topicId, FOLLOWER);
     return -1;
@@ -349,14 +333,11 @@ void updateLog(int topicId, std::vector<LogEntry> logEntries, int logIndex, int 
   for(auto itr = logEntries.begin(); itr != logEntries.end(); itr++){
     // printf("[Broker(Raft)Server:AppendEntries]adding entry\n");
     logEntry = Log(itr->index(), itr->term(), itr->topicid(), itr->messageindex(), itr->message());
-    logs[topicId].push_back(logEntry); 
+    logs[topicId].push_back(logEntry);
+    plogs[topicId]->Put(leveldb::WriteOptions(), to_string(logEntry.index), logEntry.toString());
     mutex_lli.lock();
     lastLogIndex[topicId] = itr->index();
     mutex_lli.unlock();
-    // printf("itr->index(): %d\n", itr->index());
-    // persist in DB
-    // leveldb::Status logstatus = plogs->Put(leveldb::WriteOptions(), to_string(logEntry.index), logEntry.toString());
-    // assert(status.ok()); should we add a try:catch here?
   }
   printRaftLog();
 }
@@ -405,8 +386,8 @@ BrokerClient::BrokerClient(std::shared_ptr<Channel> channel)
       if(response.currterm() > currentTerm[topicId]){
         printf("[RaftClient::AppendEntries] Higher Term in Response\n");
         currentTerm[topicId] = response.currterm();
-        // pmetadata->Put(leveldb::WriteOptions(), "currentTerm", to_string(currentTerm));
-        // pmetadata->Put(leveldb::WriteOptions(), "votedFor", to_string(-1));     
+        pmetadata[topicId]->Put(leveldb::WriteOptions(), "currentTerm", to_string(currentTerm[topicId]));
+        pmetadata[topicId]->Put(leveldb::WriteOptions(), "votedFor", to_string(-1));     
         return -3; // leader should convert to follower
       } else {
         printf("[RaftClient::AppendEntries] Term mismatch at prevLogIndex. Try with a lower nextIndex.\n");
@@ -550,9 +531,9 @@ void runElection(int topicID) {
   if(votesReceived[topicID] >= majority) {
     printf("Candidate %d received majority of votes from available servers for topic %d\n", serverID, topicID);
     setCurrState(topicID, LEADER);
+    bgClient->SetLeader(topicID);
   }
 }
-
 
 /****************************************** BrokerGrpcServer *****************************************/
 class BrokerGrpcServer final : public BrokerServer::Service {
@@ -756,7 +737,89 @@ void openOrCreateDBs() {
     replicateddb[id] = replicateddbPtr;
     printf("[openOrCreateDBs] Successfully opened replicateddb DB.\n");
   }
-  
+}
+
+void initializePersistedValues() {
+  string value = "";
+  for(auto id: topicsInCluster) {
+    leveldb::Status currentTermStatus = pmetadata[id]->Get(leveldb::ReadOptions(), "currentTerm", &value);
+    mutex_ct.lock();
+    if (!currentTermStatus.ok()) {
+      std::cerr << "[initializePersistedValues] currentTerm[" << id << "]: Error: " << currentTermStatus.ToString() << endl;
+      currentTerm[id] = 0;
+    } else {
+      currentTerm[id] = stoi(value);
+      printf("[initializePersistedValues] currentTerm[%d] = %d\n", id, currentTerm[id]);
+    }
+    mutex_ct.unlock();
+
+    value = "";
+    leveldb::Status lastAppliedStatus = pmetadata[id]->Get(leveldb::ReadOptions(), "lastApplied", &value);
+    mutex_la.lock();
+    if(!lastAppliedStatus.ok()) {
+      std::cerr << "[initializePersistedValues] lastApplied[" << id << "]: Error: " << lastAppliedStatus.ToString() << endl;
+      lastApplied[id] = -1;
+    } else {
+      lastApplied[id] = stoi(value);
+      printf("[initializePersistedValues] lastApplied[%d] = %d\n", id, lastApplied[id]);
+    }
+    mutex_la.unlock();
+
+    value = "";
+    leveldb::Status votedForStatus = pmetadata[id]->Get(leveldb::ReadOptions(), "votedFor", &value);
+    mutex_vf.lock();
+    if(!votedForStatus.ok()) {
+      std::cerr << "[initializePersistedValues] votedFor[" << id << "]: Error: " << votedForStatus.ToString() << endl;
+      votedFor[id] = -1;
+    } else {
+      votedFor[id] = stoi(value);
+      printf("[initializePersistedValues] votedFor[%d] = %d\n", id, votedFor[id]);
+    }
+    mutex_vf.unlock();
+
+    int logidx = 0;
+    while(true) {
+      string logString = "";
+      leveldb::Status logstatus = plogs[id]->Get(leveldb::ReadOptions(), to_string(logidx), &logString);
+      if(logstatus.ok()) {
+        Log l(logString);
+        logs[id].push_back(l);
+        if(logidx <= lastApplied[id])
+          messageQ[id].push_back(l.msg);
+        logidx++;
+      } else {
+        std::cerr << "[initializePersistedValues] logidx[" << id <<"] = " << logidx << ": Error: " << logstatus.ToString() << endl;
+        break;
+      }
+    }
+    mutex_lli.lock();
+    lastLogIndex[id] = logidx - 1;
+    mutex_lli.unlock();
+    printf("[initializePersistedValues] Loaded logs into memory for topic %d till index = %d\n", id, logidx-1);
+    printf("[initializePersistedValues] Loaded messageQ into memory for topic %d till index = %d\n", id, ((lastApplied[id] <= logidx-1) ? lastApplied[id] : logidx-1));
+  }
+}
+
+void initializeVolatileValues() {
+  for(auto id: topicsInCluster) {
+    beginElectionTimer[id] = Timer(1, MAX_ELECTION_TIMEOUT);
+    setCurrState(id, FOLLOWER);
+    votesReceived[id] = 0;
+    commitIndex[id] = -1;
+    updateCommitIndexFlag[id] = false;
+    for(auto& [brokerId, si] : brokersInCluster) {
+      nextIndex[id].insert(std::make_pair(brokerId, 0));
+      matchIndex[id].insert(std::make_pair(brokerId, -1));
+    }
+  }
+
+  mutex_tul.lock();
+  vector<int> tulLocal = topicsUnderLeadership;
+  mutex_tul.unlock();
+  for(uint id: tulLocal) {
+    setCurrState(id, LEADER);
+    commitIndex[id] = lastApplied[id];
+  }
 }
 
 void RunGrpcServer(string server_address) {
@@ -769,47 +832,6 @@ void RunGrpcServer(string server_address) {
   server->Wait();
 }
 
-void init_new_topic(int topicId){
-  printf("init_new_topic\n");
-  mutex_lli.lock();
-  lastLogIndex[topicId] = -1;
-  mutex_lli.unlock();
-  printf("lli set\n");
-  mutex_mi.lock();
-  mutex_ni.lock();
-  for(auto& [brokerId, serverInfo] : brokersInCluster) {
-    printf("brokerId: %d\n",brokerId);
-    nextIndex[topicId].insert(std::make_pair(brokerId, 0));
-    if(brokerId == serverID) {
-      matchIndex[topicId].insert(std::make_pair(brokerId, -1));
-    } else {
-      matchIndex[topicId].insert(std::make_pair(brokerId, 0));
-    }
-  }
-  mutex_ni.unlock();
-  mutex_mi.unlock();
-  
-  printf("initED_new_topic\n"); 
-}
-
-void test_log(){
-  printf("Test starting in 3...2....1 \n");
-  vector<Log> msgLogs;
-  topicsUnderLeadership.push_back(1);
-  init_new_topic(1);
-  Log logEntry1 = Log(0, 1, 1, 0, "first message");
-  Log logEntry2 = Log(1, 1, 1, 0, "second message");  
-  msgLogs.push_back(logEntry1);
-  msgLogs.push_back(logEntry2);  
-  mutex_logs.lock();
-  logs.insert(std::make_pair(1, msgLogs));
-  mutex_logs.unlock();
-  mutex_lli.lock();
-  lastLogIndex[1] = logs[1].size() - 1;
-  mutex_lli.unlock();
-  printf("Test updatted logs \n");
-}
-
 int main(int argc, char* argv[]) {
   if(argc != 2) {
     printf("Usage: ./broker <serverid>\n");
@@ -820,44 +842,23 @@ int main(int argc, char* argv[]) {
 
   int rc_ret = bgClient->RequestConfig(serverID);
   assert(rc_ret == 0);
+  openOrCreateDBs();
+  initializePersistedValues();
+  initializeVolatileValues();
   for(auto si: brokersInCluster) {
     printf("Broker: %d-%s in Cluster: %d\n", si.first, si.second.server_name.c_str(), clusterID);
   }
   for(uint tpcid: topicsInCluster) {
     printf("Topic added to cluster: %d\n", tpcid);
-    for(auto& [brokerId, si] : brokersInCluster) {
-      nextIndex[tpcid].insert(std::make_pair(brokerId, 0));
-      matchIndex[tpcid].insert(std::make_pair(brokerId, -1));
-      lastLogIndex[tpcid] = -1;
-    }
   }
 
-  /*
-  * Please use brokersInCluster.client to call BrokerClient's functions like AppendEntries and RequestVote
-  * which will contact BrokerGrpcServer of respective server_addr 
-  */
-
-  openOrCreateDBs();
-  thread heartbeat(runHeartbeatTimer);
-  currentTerm[1] = 1;
-  commitIndex[2] = -1;
-  commitIndex[1] = -1;
-  lastApplied[2] = -1;
-  lastApplied[1] = -1;
-
-  if(serverID == 0) ;
-    // test_log();
-  else setCurrState(1, FOLLOWER);
-
-  // NOTE: initialize lastlogindex and nextIndex and matchIndex 
-
   for(auto& brokerId : brokersInCluster) {
-    // printf("[runRaftServer] Starting AppendEntriesInvoker for term = %d\n", ctLocal);
     if(brokerId.first == serverID) continue;
     sendLogEntries[brokerId.first] = true;
     appendEntriesThreads[brokerId.first] = thread { invokeAppendEntries, brokerId.first }; 
   }
 
+  thread heartbeat(runHeartbeatTimer);
   thread updateCommitIndex(checkAndUpdateCommitIndex);
   thread addToMessageQ(executeLog);
   RunGrpcServer(brokersInCluster[serverID].server_addr);
