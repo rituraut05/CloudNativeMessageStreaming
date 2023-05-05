@@ -55,7 +55,6 @@ unordered_map<int, int> lastLogIndex; // valid index starts from 1
 std::shared_mutex mutex_ci; // for commitIndex
 std::shared_mutex mutex_lli; // for lastLogIndex
 std::shared_mutex mutex_votes; // for votesReceived
-std::shared_mutex mutex_leader; // for leaderID
 std::shared_mutex mutex_cs; // for currState
 std::shared_mutex mutex_er; // for electionRunning
 std::shared_mutex mutex_ct; // for currentTerm
@@ -67,6 +66,7 @@ std::shared_mutex mutex_ni; // for nextIndex
 std::shared_mutex mutex_logs; // for logs
 std::shared_mutex mutex_messageQ; // for messageQueue
 std::shared_mutex mutex_tul; // for topicsUnderLeadership
+std::shared_mutex mutex_sle; // for sendLogEntries
 
 
 

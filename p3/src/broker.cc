@@ -42,6 +42,8 @@ using dps::ServerConfig;
 using dps::AppendEntriesRequest;
 using dps::AppendEntriesResponse;
 using dps::LogEntry;
+using dps::BrokerUpRequest;
+using dps::BrokerUpResponse;
 using util::Timer;
 
 
@@ -128,7 +130,7 @@ void executeLog() {
     for(int topicId : topicsInCluster){
       vector<string> new_messages;
       if(lastAppliedLocal[topicId] < commitIndexLocal[topicId]) {
-        printf("[ExecuteLog]: Executing log (size = %d) for TOPIC %d from index: %d\n", logs[topicId].size(), topicId, lastAppliedLocal[topicId]+1); 
+        printf("[ExecuteLog]: Executing log (size = %lu) for TOPIC %d from index: %d\n", logs[topicId].size(), topicId, lastAppliedLocal[topicId]+1); 
         for(int i = lastAppliedLocal[topicId]+1; i < logs[topicId].size(); i++){
           if(i <= commitIndexLocal[topicId]){
             new_messages.push_back(logs[topicId][i].msg);
@@ -146,9 +148,6 @@ void executeLog() {
         lastApplied[topicId] = lastAppliedLocal[topicId];
         pmetadata[topicId]->Put(leveldb::WriteOptions(), "lastApplied", to_string(lastApplied[topicId]));
         mutex_la.unlock();
-        // for(auto& msg : messageQ[topicId]){
-        //   cout << topicId << ": " << msg << ";\n";
-        // } 
       }
     }
   }
@@ -160,10 +159,9 @@ void setCurrState(int topicId, State cs)
   currStateMap[topicId] = cs;
   mutex_cs.unlock();
   if(cs == LEADER) {
-    // add topicid to your topics list.
-    // TODO: add locks
     mutex_ni.lock();
     mutex_mi.lock();
+    mutex_lli.lock();
     for(auto& [brokerId, si] : brokersInCluster) {
       nextIndex[topicId][brokerId] = lastLogIndex[topicId] + 1;
       if(brokerId == serverID) {
@@ -172,6 +170,7 @@ void setCurrState(int topicId, State cs)
         matchIndex[topicId][brokerId] = -1;
       }
     }
+    mutex_lli.unlock();
     mutex_mi.unlock();
     mutex_ni.unlock();
     mutex_tul.lock();
@@ -269,18 +268,18 @@ int sendAppendEntriesRpc(int followerid, int topicId, int nextIndexLocal, int la
   mutex_ni.lock();
   if(ret == 0) { // success
     sendLogEntries[followerid] = true;
-    printf("[sendAppendEntriesRpc] AppendEntries successful for followerid = %d, startidx = %d, endidx = %d\n", followerid, nextIndex[topicId][followerid], lastidx);
+    printf("[sendAppendEntriesRpc] AppendEntries successful for followerid = %d for topic = %d, startidx = %d, endidx = %d\n", followerid, topicId, nextIndex[topicId][followerid], lastidx);
     nextIndex[topicId][followerid] = lastidx + 1;
     matchIndex[topicId][followerid] = lastidx;
     
   } else if(ret == -1) { // RPC Failure
     sendLogEntries[followerid] = false;
   } else if(ret == -2) { // log inconsistency
-    printf("[sendAppendEntriesRpc] AppendEntries failure; Log inconsistency for followerid = %d, new nextIndex = %d\n", followerid, nextIndex[followerid]);
+    printf("[sendAppendEntriesRpc] AppendEntries failure; Log inconsistency for followerid = %d for topic = %d, new nextIndex = %d\n", followerid, topicId, nextIndex[topicId][followerid]);
     sendLogEntries[followerid] = true;
     nextIndex[topicId][followerid]--;
   } else if(ret == -3) { // term of follower bigger, convert to follower
-    printf("[sendAppendEntriesRpc] AppendEntries failure; Follower (%d) has bigger term (new term = %d), converting to follower.\n", followerid, currentTerm.at(topicId));
+    printf("[sendAppendEntriesRpc] AppendEntries failure; Follower (%d) has bigger term (new term = %d) for topic %d, converting to follower.\n", followerid, currentTerm.at(topicId), topicId);
     sendLogEntries[followerid] = true;
     setCurrState(topicId, FOLLOWER);
     return -1;
@@ -307,11 +306,14 @@ void invokeAppendEntries(int followerid) {
       mutex_lli.unlock();
       // printf("[invokeAppendEntries] nextIndex[%d][%d]: %d\n", topicId, followerid, nextIndex[topicId][followerid]);
       // printf("[invokeAppendEntries] lastLogIndex[%d]: %d\n", topicId, lastLogIndex[topicId]);
+      mutex_sle.lock();
       if(ni_local <= lli_local && sendLogEntries[followerid]) {
-        printf("[invokeAppendEntries] followerid != serverID: %d\n", topicId);
+        mutex_sle.unlock();
+        printf("[invokeAppendEntries] followerid != serverID for topic: %d\n", topicId);
         int lastidx = lli_local;
         status = sendAppendEntriesRpc(followerid, topicId, ni_local, lastidx);
       }
+      mutex_sle.unlock();
       mutex_ucif.lock();
       if(updateCommitIndexFlag[topicId]) {
         printf("[invokeAppendEntries]sending rpc for updatecommitindex: %d\n", topicId);
@@ -661,10 +663,6 @@ class BrokerGrpcServer final : public BrokerServer::Service {
     int topicId = request->topicid();
     if(request->term() >= currentTerm[topicId]){
       printf("[Broker(Raft)Server:AppendEntries]Condn satisfied: request->term() >= currentTerm[topicId]\n");
-      // mutex_leader.lock();
-      // leaderID = request->leaderid();
-      // printf("Setting LeaderID = %d\n", leaderID);
-      // mutex_leader.unlock();
 
       mutex_ct.lock();
       currentTerm[topicId] = (int)request->term(); // updating current term
@@ -707,6 +705,16 @@ class BrokerGrpcServer final : public BrokerServer::Service {
     } 
     response->set_currterm(currentTerm[topicId]);
     response->set_success(rpcSuccess);
+    return Status::OK;
+  }
+
+  Status BrokerUp(ServerContext *context, const BrokerUpRequest *request, BrokerUpResponse *reponse) override 
+  {
+    uint brokerupid = request->brokerid();
+    printf("[BrokerUp] Broker %d now alive!\n", brokerupid);
+    mutex_sle.lock();
+    sendLogEntries[brokerupid] = true;
+    mutex_sle.unlock();
     return Status::OK;
   }
 };

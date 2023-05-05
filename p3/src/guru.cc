@@ -34,6 +34,8 @@ using dps::ClusterConfigResponse;
 using dps::ServerConfig;
 using dps::SetLeaderRequest;
 using dps::SetLeaderResponse;
+using dps::BrokerUpRequest;
+using dps::BrokerUpResponse;
 using util::Timer;
 
 #define BROKER_ALIVE_TIMEOUT    5000
@@ -121,18 +123,23 @@ class GuruGrpcServer final : public GuruServer::Service {
 
       // printf("Received %s from broker %d in cluster %d\n", HEART, brokerid, clusterid);
 
-      // printf("Topics under leadership of broker %d:\n", brokerid);
-      // mutex_ltm.lock();
-      // for(uint topicid: leaderToTopicsMap[brokerid]) {
-      //   printf("%d ", topicid);
-      // }
-      // printf("\n");
-      // mutex_ltm.unlock();
-
       brokerAliveTimers[brokerid].reset(BROKER_ALIVE_TIMEOUT);
       if(!brokers[brokerid].alive) {
+        printf("[Heartbeat] Broker %d now alive!\n", brokerid);
         brokers[brokerid].alive = true;
-        // TODO: send BrokerUp calls to other brokers in cluster 
+        uint clusterid = brokers[brokerid].clusterid;
+        Cluster config;
+        for(Cluster c: clusters) {
+          if(c.clusterid == clusterid) {
+            config = c;
+            break;
+          }
+        }
+        for(uint brokeridInCluster: config.brokers) {
+          if(brokeridInCluster != brokerid) {
+            brokers[brokeridInCluster].gbClient->BrokerUp(brokerid);
+          }
+        }
       }
 
       for(Cluster c: clusters) {
@@ -259,6 +266,29 @@ int GuruToBrokerClient::StartElection(int topicID) {
       printf("[StartElection]: GuruToBrokerClient - Unavailable server\n");
     }
     printf("[StartElection]: RPC Failure\n");
+    return -1;
+  }
+}
+
+int GuruToBrokerClient::BrokerUp(int brokerid) {
+  BrokerUpRequest request;
+  BrokerUpResponse reply;
+  Status status;
+  ClientContext context;
+
+  request.set_brokerid(brokerid);
+  reply.Clear();
+
+  status = stub_->BrokerUp(&context, request, &reply);
+
+  if(status.ok()) {
+    printf("[BrokerUp] GuruToBrokerClient - RPC Success: Informed that %d is up.\n", brokerid);
+    return 0;
+  } else {
+    if(status.error_code() == StatusCode::UNAVAILABLE){
+      printf("[BrokerUp]: GuruToBrokerClient - Unavailable server\n");
+    }
+    printf("[BrokerUp]: RPC Failure\n");
     return -1;
   }
 }
