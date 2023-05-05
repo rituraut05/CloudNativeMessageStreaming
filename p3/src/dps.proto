@@ -58,8 +58,13 @@ message RequestVoteResponse {
 
 message SendMessageRequest { }
 message SendMessageResponse { }
-message ReadMessageRequest { }
-message ReadMessageResponse { }
+message ReadMessageRequest {
+  uint32 index = 1;
+  uint32 topic = 2;
+ }
+message ReadMessageResponse {
+  string message = 1;  
+ }
 
 service GuruServer
 {
