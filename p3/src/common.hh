@@ -11,7 +11,6 @@
 
 #define TOPICS_PER_CLUSTER_THRESHOLD 10
 
-string C0_ADDRESSES[3] = {"0.0.0.0:50051",  "0.0.0.0:50052", "0.0.0.0:50053"};
 
 using std::string;
 using std::vector;
@@ -24,6 +23,8 @@ using grpc::CreateChannel;
 using grpc::InsecureChannelCredentials;
 using grpc::Channel;
 using dps::BrokerServer;
+
+string C0_ADDRESSES[3] = {"0.0.0.0:50051",  "0.0.0.0:50052", "0.0.0.0:50053"};
 
 class GuruToBrokerClient {
   public:
