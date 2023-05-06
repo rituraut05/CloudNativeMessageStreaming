@@ -44,8 +44,6 @@ using util::Timer;
 
 // ****************************** Variables ******************************
 
-int cluster_cnt = 0;
-
 // brokerid - Timer with BROKER_ALIVE_TIMEOUT
 unordered_map<int, Timer> brokerAliveTimers;
 
@@ -57,9 +55,9 @@ vector<Cluster> clusters; // persist
 unordered_map<int, ServerInfo> brokers; // persist
 
 // topicid - clusterid
-unordered_map<int, int> topicToClusterMap; // persist
+unordered_map<int, int> topicToClusterMap;
 // topicid - leaderid (brokerid)
-unordered_map<int, int> topicToLeaderMap; // persist
+unordered_map<int, int> topicToLeaderMap; 
 // leaderid (brokerid) - list of topic ids under its leadership
 unordered_map<int, vector<int>> leaderToTopicsMap;
 // publisherid - list of topics it sends messages to
@@ -67,10 +65,31 @@ unordered_map<int, vector<int>> publisherToTopicsMap; // required?
 // subscriberid - list of topics it consumes messages from
 unordered_map<int, vector<int>> subscriberToTopicsMap;
 
+// To store config 
+leveldb::DB *clusterconfig;
+leveldb::DB *brokerconfig;
+
 shared_mutex mutex_tlm; // lock for topicToLeaderMap
 shared_mutex mutex_ltm; // lock for leaderToTopicsMap
 
 // **************************** Functions ********************************
+
+int addCluster(uint clustersize, string addrs[]) {
+  uint newClusterId = clusters.size();
+  uint newBrokerId = brokers.size();
+  Cluster c_new(newClusterId);
+  for(int i = 0; i<clustersize; i++) {
+    ServerInfo si(newBrokerId + i, newClusterId, addrs[i]);
+    si.initGuruToBrokerClient();
+    brokers[si.serverid] = si;
+    brokerconfig->Put(leveldb::WriteOptions(), to_string(si.serverid), si.toString());
+    brokerAliveTimers[si.serverid] = Timer(1, BROKER_ALIVE_TIMEOUT);
+    c_new.addBroker(si.serverid);
+  }
+  clusters.push_back(c_new);
+  clusterconfig->Put(leveldb::WriteOptions(), to_string(newClusterId), c_new.toString());
+  return newClusterId;
+}
 
 void invokeStartElection(int bid, int topicID) {
   int ret = brokers[bid].gbClient->StartElection(topicID);
@@ -293,6 +312,18 @@ int GuruToBrokerClient::BrokerUp(int brokerid) {
   }
 }
 
+void openOrCreateDBs() {
+  leveldb::Options options;
+  options.create_if_missing = true;
+  leveldb::Status clusters_status = leveldb::DB::Open(options, "/tmp/clusterconfig", &clusterconfig);
+  if (!clusters_status.ok()) std::cerr << clusters_status.ToString() << endl;
+  assert(clusters_status.ok());
+
+  leveldb::Status brokers_status = leveldb::DB::Open(options, "/tmp/brokerconfig", &brokerconfig);
+  if (!brokers_status.ok()) std::cerr << brokers_status.ToString() << endl;
+  assert(brokers_status.ok());
+}
+
 void RunGrpcServer(string server_address) {
   GuruGrpcServer service;
   ServerBuilder builder;
@@ -305,34 +336,13 @@ void RunGrpcServer(string server_address) {
 
 // **************************** Main **********************************
 int main(int argc, char* argv[]) {
-  // For testing, remove later ---------------------------------
-  cluster_cnt++;
-  Cluster c0(0);
-  ServerInfo s0(0, 0, "0.0.0.0:50051");
-  ServerInfo s1(1, 0, "0.0.0.0:50052");
-  ServerInfo s2(2, 0, "0.0.0.0:50053");
-  s0.initGuruToBrokerClient();
-  s1.initGuruToBrokerClient();
-  s2.initGuruToBrokerClient();
-  c0.addBroker(s0.serverid);
-  c0.addBroker(s1.serverid);
-  c0.addBroker(s2.serverid);
-  c0.addTopic(1);
-  c0.addTopic(2);
-  clusters.push_back(c0);
-  brokers[s0.serverid] = s0;
-  brokers[s1.serverid] = s1;
-  brokers[s2.serverid] = s2;
-  for(int j = 0; j<3; j++) {
-    brokerAliveTimers[j] = Timer(1, BROKER_ALIVE_TIMEOUT);
-  }
-  c0.print();
-  vector<int> topicsOfLeader1;
-  topicsOfLeader1.push_back(1);
-  topicsOfLeader1.push_back(2);
-  leaderToTopicsMap[1] = topicsOfLeader1;
-  // ---------------------------------------------
+  openOrCreateDBs();
+  // initializePersistedValues() : low priority, take clusters and topics 
+  int cid = addCluster(3, C0_ADDRESSES);
+  clusters[0].print();
 
+  // Have to write addTopic() : wait for it! 
+  
   thread checkLeaderElectionsThread(checkLeaderElections);
   RunGrpcServer(GURU_ADDRESS);
   if(checkLeaderElectionsThread.joinable()) checkLeaderElectionsThread.join();
