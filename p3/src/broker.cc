@@ -43,6 +43,8 @@ using dps::AppendEntriesRequest;
 using dps::AppendEntriesResponse;
 using dps::PublishMessageRequest;
 using dps::PublishMessageResponse;
+using dps::ReadMessageRequest;
+using dps::ReadMessageResponse;
 using dps::LogEntry;
 using dps::BrokerUpRequest;
 using dps::BrokerUpResponse;
@@ -656,7 +658,30 @@ class BrokerGrpcServer final : public BrokerServer::Service {
 
       return Status::OK;
     }
-        
+
+    Status ReadMessageStream(ServerContext *context, const ReadMessageRequest *request, ServerWriter<ReadMessageResponse> *writer) override
+    {
+        try
+        {
+          int topicId = request->topicid();
+          int index = request->index();
+          ReadMessageResponse reply;
+          printf("[ReadMessageStream]: Reading topic = %d, from index = %d\n", topicId, index);
+
+
+            for(int i = index; i<messageQ[topicId].size(); i++){
+              reply.set_message(messageQ[topicId][i]);
+              writer->Write(reply);
+            }
+
+            return Status::OK;
+        }
+        catch (const std::exception &e)
+        {
+            printf("ReadMessageStream [Unexpected Exception] %s\n", e.what());
+            return Status(StatusCode::UNKNOWN, e.what());
+        }
+    }
   Status AppendEntries(ServerContext *context, const AppendEntriesRequest *request, AppendEntriesResponse *response) override
   {
     printf("[Broker(Raft)Server:AppendEntries]Received RPC!\n");

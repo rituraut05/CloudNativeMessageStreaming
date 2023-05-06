@@ -264,21 +264,51 @@ class GuruGrpcServer final : public GuruServer::Service {
       return Status::OK;
     }
 
-  Status GetBrokerForWrite(ServerContext *contect, const GetBrokerRequest *request, GetBrokerResponse *response) override
-  {
-    int topicId = request->topicid();
+    Status GetBrokerForWrite(ServerContext *contect, const GetBrokerRequest *request, GetBrokerResponse *response) override
+    {
+      int topicId = request->topicid();
 
-    printf("[GetBrokerForWrite] Request received for topic %d.\n", topicId);
-    mutex_tlm.lock();
-    int brokerId = topicToLeaderMap[topicId];
-    mutex_tlm.unlock();
-    
-    string brokerAddr = brokers[brokerId].server_addr;
+      printf("[GetBrokerForWrite] Request received for topic %d.\n", topicId);
+      mutex_tlm.lock();
+      int brokerId = topicToLeaderMap[topicId];
+      mutex_tlm.unlock();
+      
+      string brokerAddr = brokers[brokerId].server_addr;
 
-    response->set_brokerid(brokerId);
-    response->set_brokeraddr(brokerAddr);
-    return Status::OK;
-  }
+      response->set_brokerid(brokerId);
+      response->set_brokeraddr(brokerAddr);
+      return Status::OK;
+    }
+
+    Status GetBrokerForRead(ServerContext *contect, const GetBrokerRequest *request, GetBrokerResponse *response) override
+    {
+      int topicId = request->topicid();
+
+      printf("[GetBrokerForRead] Request received for topic %d.\n", topicId);
+
+      int clusterid = topicToClusterMap[topicId];
+
+      Cluster config;
+      for(Cluster c: clusters) {
+        if (c.clusterid == clusterid) {
+          config = c;
+          break;
+        }
+      }
+
+      int rind = rand() % config.brokers.size();
+      int brokerId = config.brokers[rind];
+      while(!brokers[brokerId].alive) {
+        rind = rand() % config.brokers.size();
+        brokerId = config.brokers[rind];
+      }
+            
+      string brokerAddr = brokers[brokerId].server_addr;
+
+      response->set_brokerid(brokerId);
+      response->set_brokeraddr(brokerAddr);
+      return Status::OK;
+    }
 };
 
 GuruToBrokerClient::GuruToBrokerClient(shared_ptr<Channel> channel)

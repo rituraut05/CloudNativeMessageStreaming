@@ -64,7 +64,7 @@ message RequestVoteResponse {
 
 message ReadMessageRequest {
   uint32 index = 1;
-  uint32 topic = 2;
+  uint32 topicId = 2;
  }
 message ReadMessageResponse {
   string message = 1;  
