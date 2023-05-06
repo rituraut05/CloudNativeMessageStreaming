@@ -88,8 +88,13 @@ service GuruServer
   rpc RequestConfig(ClusterConfigRequest) returns (ClusterConfigResponse) {}
 }
 
-message GetBrokerRequest { }
-message GetBrokerResponse { }
+message GetBrokerRequest {
+  uint32 topicId = 1;
+}
+message GetBrokerResponse {
+  uint32 brokerId = 1;
+  string brokerAddr = 2;
+ }
 
 message SubscribeRequest { }
 message SubscribeResponse { }
