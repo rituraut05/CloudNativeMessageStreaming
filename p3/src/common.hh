@@ -24,7 +24,13 @@ using grpc::InsecureChannelCredentials;
 using grpc::Channel;
 using dps::BrokerServer;
 
-string C0_ADDRESSES[3] = {"0.0.0.0:50051",  "0.0.0.0:50052", "0.0.0.0:50053"};
+string C_ADDRESSES[][3] = {
+  {"0.0.0.0:50051", "0.0.0.0:50052", "0.0.0.0:50053"},
+  {"0.0.0.0:50054", "0.0.0.0:50055", "0.0.0.0:50056"},
+  {"0.0.0.0:50057", "0.0.0.0:50058", "0.0.0.0:50059"},
+  {"0.0.0.0:50060", "0.0.0.0:50061", "0.0.0.0:50062"},
+  {"0.0.0.0:50063", "0.0.0.0:50064", "0.0.0.0:50065"}
+};
 
 class GuruToBrokerClient {
   public:
@@ -131,7 +137,8 @@ class Cluster {
     }
 
     void addTopic(uint topicid) {
-      this->topics.push_back(topicid);
+      if(std::find(this->topics.begin(), this->topics.end(), topicid) == this->topics.end())
+        this->topics.push_back(topicid);
     }
 
     void removeTopic(uint topicid) {
@@ -139,8 +146,10 @@ class Cluster {
     }
 
     void addBroker(uint sid) {
-      this->brokers.push_back(sid);
-      this->size++;
+      if(std::find(this->brokers.begin(), this->brokers.end(), sid) == this->brokers.end()) {
+        this->brokers.push_back(sid);
+        this->size++;
+      }
     }
 
     void removeBroker(uint sid) {

@@ -26,6 +26,8 @@ using dps::GetBrokerRequest;
 using dps::GetBrokerResponse;
 using dps::PublishMessageRequest;
 using dps::PublishMessageResponse;
+using dps::AddTopicRequest;
+using dps::AddTopicResponse;
 
 typedef unique_ptr<BrokerServer::Stub> BrokerStub;
 typedef unique_ptr<GuruServer::Stub> GuruStub;
@@ -53,6 +55,32 @@ Publisher::Publisher(shared_ptr<Channel> guruchannel)
   : gurustub_(GuruServer::NewStub(guruchannel)) 
 {
   printf("------------ Opened channel to Guru -------------\n");
+}
+
+int Publisher::AddTopic(int topicid) {
+  AddTopicRequest request;
+  AddTopicResponse response;
+  Status status;
+  ClientContext context;
+
+  request.set_topicid(topicid);
+  response.Clear();
+
+  status = gurustub_->AddTopic(&context, request, &response);
+
+  if(status.ok()) {
+    if(response.success()) {
+      printf("[AddTopic] Successfully added topic %d with guru.\n", topicid);
+    } else {
+      if(response.dps_errno() == -1) {
+        printf("[AddTopic] Cannot add topic %d with guru because topic already exists.\n", topicid);
+      }
+    }
+    return 0;
+  } else {
+    printf("[AddTopic] RPC Failure: Unable to add topic, please retry.\n");
+    return -1;
+  }
 }
 
 int Publisher::GetBrokerForWrite(int topicId){
@@ -152,6 +180,8 @@ int main(int argc, char* argv[]) {
   //getBrokerForWrite(topicId)
   publishClient = new Publisher(grpc::CreateChannel(GURU_ADDRESS, grpc::InsecureChannelCredentials()));
 
+  int addTopicRet = publishClient->AddTopic(topicId);
+   
   int getBroker = publishClient->GetBrokerForWrite(topicId);
   assert(getBroker == 0);
 

@@ -38,6 +38,8 @@ using dps::BrokerUpRequest;
 using dps::BrokerUpResponse;
 using dps::GetBrokerRequest;
 using dps::GetBrokerResponse;
+using dps::AddTopicRequest;
+using dps::AddTopicResponse;
 using util::Timer;
 
 #define BROKER_ALIVE_TIMEOUT    5000
@@ -73,6 +75,7 @@ leveldb::DB *brokerconfig;
 
 shared_mutex mutex_tlm; // lock for topicToLeaderMap
 shared_mutex mutex_ltm; // lock for leaderToTopicsMap
+shared_mutex mutex_tcm; // lock for topicToClusterMap
 
 // **************************** Functions ********************************
 
@@ -91,6 +94,30 @@ int addCluster(uint clustersize, string addrs[]) {
   clusters.push_back(c_new);
   clusterconfig->Put(leveldb::WriteOptions(), to_string(newClusterId), c_new.toString());
   return newClusterId;
+}
+
+int addTopic(uint topicid) {
+  uint clusterid = 0;
+  mutex_tcm.lock();
+  unordered_map<int, int> tcm_local = topicToClusterMap;
+  mutex_tcm.unlock();
+  if(tcm_local.find(topicid) != tcm_local.end()) return -1; // Topic already exists
+  for(; clusterid < clusters.size(); clusterid++) {
+    if(clusters[clusterid].topics.size() < TOPICS_PER_CLUSTER_THRESHOLD) break;
+  }
+  if(clusterid == clusters.size()) { // No space, add a cluster 
+    addCluster(3, C_ADDRESSES[clusterid]);
+  }
+  mutex_tcm.lock();
+  topicToClusterMap[topicid] = clusterid;
+  mutex_tcm.unlock();
+  clusters[clusterid].addTopic(topicid);
+  clusterconfig->Put(leveldb::WriteOptions(), to_string(clusterid), clusters[clusterid].toString());
+  mutex_tlm.lock();
+  topicToLeaderMap[topicid] = -1;
+  mutex_tlm.unlock();
+  waitForElectionTimers[topicid] = Timer(1, WAIT_FOR_LEADER_TIMEOUT);
+  return 0; // success
 }
 
 void invokeStartElection(int bid, int topicID) {
@@ -114,10 +141,13 @@ void checkLeaderElections() {
         waitForElectionTimers[topicid].reset(WAIT_FOR_LEADER_TIMEOUT);
         Cluster clusterOwningTopic;
         for(Cluster c: clusters) {
+          mutex_tcm.lock();
           if(c.clusterid == topicToClusterMap[topicid]) {
             clusterOwningTopic = c;
+            mutex_tcm.unlock();
             break;
           }
+          mutex_tcm.unlock();
         }
         for(uint brokeridInCluster: clusterOwningTopic.brokers) {
           if(brokers[brokeridInCluster].alive) {
@@ -234,7 +264,9 @@ class GuruGrpcServer final : public GuruServer::Service {
     {
       uint leaderid = request->leaderid();
       uint topicid = request->topicid();
+      mutex_tcm.lock();
       uint clusterid = topicToClusterMap[topicid];  
+      mutex_tcm.unlock();
 
       printf("[SetLeader] Setting leader = %d in cluster %d for topic %d.\n", leaderid, clusterid, topicid);
 
@@ -250,14 +282,14 @@ class GuruGrpcServer final : public GuruServer::Service {
       topicToLeaderMap[topicid] = leaderid;
       mutex_tlm.unlock();
 
-      config.addTopic(topicid);
       mutex_ltm.lock();
       if(leaderToTopicsMap.find(leaderid) == leaderToTopicsMap.end()) {
         vector<int> tpcs;
         tpcs.push_back(topicid);
         leaderToTopicsMap[leaderid] = tpcs;
       } else {
-        leaderToTopicsMap[leaderid].push_back(topicid);
+        if(std::find(leaderToTopicsMap[leaderid].begin(), leaderToTopicsMap[leaderid].end(), topicid) == leaderToTopicsMap[leaderid].end())
+          leaderToTopicsMap[leaderid].push_back(topicid);
       }
       mutex_ltm.unlock();
 
@@ -286,7 +318,9 @@ class GuruGrpcServer final : public GuruServer::Service {
 
       printf("[GetBrokerForRead] Request received for topic %d.\n", topicId);
 
+      mutex_tcm.lock();
       int clusterid = topicToClusterMap[topicId];
+      mutex_tcm.unlock();
 
       Cluster config;
       for(Cluster c: clusters) {
@@ -307,6 +341,21 @@ class GuruGrpcServer final : public GuruServer::Service {
 
       response->set_brokerid(brokerId);
       response->set_brokeraddr(brokerAddr);
+      return Status::OK;
+    }
+
+    Status AddTopic(ServerContext *context, const AddTopicRequest *request, AddTopicResponse *response) override
+    {
+      int topicid = request->topicid();
+
+      printf("[AddTopic] Request received to add topic %d\n", topicid);
+
+      int ret = addTopic(topicid);
+      if (ret == 0) response->set_success(true);
+      else {
+        response->set_success(false);
+        response->set_dps_errno(ret);
+      }
       return Status::OK;
     }
 };
@@ -386,17 +435,9 @@ void RunGrpcServer(string server_address) {
 int main(int argc, char* argv[]) {
   openOrCreateDBs();
   // initializePersistedValues() : low priority, take clusters and topics 
-  int cid = addCluster(3, C0_ADDRESSES);
+  int cid = addCluster(3, C_ADDRESSES[0]);
   clusters[0].print();
-
-  //init topic
-  clusters[0].addTopic(1);
-  topicToLeaderMap[1] = 1;
-  vector<int> v = {1};
-  leaderToTopicsMap[1] = v;
-
-  // Have to write addTopic() : wait for it! 
-  
+ 
   thread checkLeaderElectionsThread(checkLeaderElections);
   RunGrpcServer(GURU_ADDRESS);
   if(checkLeaderElectionsThread.joinable()) checkLeaderElectionsThread.join();

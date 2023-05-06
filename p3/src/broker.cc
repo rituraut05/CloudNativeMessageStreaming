@@ -223,21 +223,28 @@ int BrokerToGuruClient::RequestConfig(int brokerid) {
     printf("[RequestConfig] Setting clusterID = %d.\n", response.clusterid());
     clusterID = response.clusterid();
     brokersInCluster.clear();
+    printf("[RequestConfig] Brokers in cluster: ");
     for(ServerConfig sc: response.brokers()) {
       ServerInfo si(sc.serverid(), clusterID, sc.servaddr());
       if(si.serverid != serverID) si.initBrokerClient();
       brokersInCluster[si.serverid] = si;
+      printf("%d ", si.serverid);
     }
+    printf("\n[RequestConfig] Topics in cluster: ");
     topicsInCluster.clear();
     for(uint topicid: response.topics()) {
       topicsInCluster.push_back(topicid);
+      printf("%d ", topicid);
     }
+    printf("\n[RequestConfig] Topics under leadership: ");
     mutex_tul.lock();
     topicsUnderLeadership.clear();
     for(uint topicid: response.leadingtopics()) {
       topicsUnderLeadership.push_back(topicid);
+      printf("%d ", topicid);
     }
     mutex_tul.unlock();
+    printf("\n");
     return 0;
   } else {
     printf("[RequestConfig] Unable to fetch cluster config, please retry.\n");
@@ -541,6 +548,47 @@ void runElection(int topicID) {
   }
 }
 
+void initNewTopic(int topicid) {
+  setCurrState(topicid, CANDIDATE);
+  mutex_ct.lock();
+  currentTerm[topicid] = 0;
+  mutex_ct.unlock();
+  mutex_vf.lock();
+  votedFor[topicid] = -1;
+  mutex_vf.unlock();
+  mutex_votes.lock();
+  votesReceived[topicid] = 0;
+  mutex_votes.unlock();
+  mutex_lli.lock();
+  lastLogIndex[topicid] = -1;
+  mutex_lli.unlock();
+  mutex_ci.lock();
+  commitIndex[topicid] = -1;
+  mutex_ci.unlock();
+  mutex_ucif.lock();
+  updateCommitIndexFlag[topicid] = false;
+  mutex_ucif.unlock();
+  for(auto& [brokerId, si] : brokersInCluster) {
+    mutex_ni.lock();
+    nextIndex[topicid].insert(std::make_pair(brokerId, 0));
+    mutex_ni.unlock();
+    mutex_mi.lock();
+    matchIndex[topicid].insert(std::make_pair(brokerId, -1));
+    mutex_mi.unlock();
+  }
+  leveldb::Options options;
+  options.create_if_missing = true;
+  leveldbPtr plogsPtr;
+  leveldb::Status plogs_status = leveldb::DB::Open(options, "/tmp/plogs" + to_string(serverID) + "-" + to_string(topicid), &plogsPtr);
+  if (!plogs_status.ok()) std::cerr << plogs_status.ToString() << endl;
+  plogs[topicid] = plogsPtr;
+
+  leveldbPtr pmetadataPtr;
+  leveldb::Status pmetadata_status = leveldb::DB::Open(options, "/tmp/pmetadata" + to_string(serverID) + "-" + to_string(topicid), &pmetadataPtr);
+  if(!pmetadata_status.ok()) std::cerr << pmetadata_status.ToString() << endl;
+  pmetadata[topicid] = pmetadataPtr;
+}
+
 /****************************************** BrokerGrpcServer *****************************************/
 class BrokerGrpcServer final : public BrokerServer::Service {
   public:
@@ -649,6 +697,11 @@ class BrokerGrpcServer final : public BrokerServer::Service {
       int topicID = req->topicid();
       // start election which will trigger requestVote
       using namespace std::chrono;
+      if(std::find(topicsInCluster.begin(), topicsInCluster.end(), topicID) == topicsInCluster.end()) {
+        printf("[StartElection] Received election request for new topic, adding to topicsInCluster.\n");
+        topicsInCluster.push_back(topicID);
+        initNewTopic(topicID);
+      }
       auto start = high_resolution_clock::now();
       thread tmpthread(runElection, topicID);
       tmpthread.detach();

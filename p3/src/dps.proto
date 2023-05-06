@@ -104,8 +104,13 @@ message GetBrokerResponse {
 message SubscribeRequest { }
 message SubscribeResponse { }
 
-message AddTopicRequest { }
-message AddTopicResponse { }
+message AddTopicRequest { 
+  uint32 topicid = 1;
+}
+message AddTopicResponse { 
+  bool success = 1;
+  int32 dps_errno = 2;
+}
 
 message SetLeaderRequest {
   uint32 leaderid = 1;
