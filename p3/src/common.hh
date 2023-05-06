@@ -24,6 +24,7 @@ class GuruToBrokerClient {
   public:
     GuruToBrokerClient(shared_ptr<Channel> channel);
     int StartElection(int topicid);
+    int BrokerUp(int brokerid);
 
   private:
     unique_ptr<BrokerServer::Stub> stub_;

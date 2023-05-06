@@ -9,6 +9,7 @@ service BrokerServer
 
   // leader election for topics 
   rpc StartElection(StartElectionRequest) returns (StartElectionResponse) {}
+  rpc BrokerUp(BrokerUpRequest) returns (BrokerUpResponse) {}
   rpc RequestVote (RequestVoteRequest) returns (RequestVoteResponse) {}
   
   // data streaming APIs 
@@ -43,6 +44,11 @@ message StartElectionRequest {
   uint32 topicId = 1;
 }
 message StartElectionResponse {}
+
+message BrokerUpRequest {
+  uint32 brokerid = 1;
+}
+message BrokerUpResponse {}
 
 message RequestVoteRequest { 
   uint32 term = 1;
@@ -118,4 +124,5 @@ message ClusterConfigResponse {
   uint32 clustersize = 3;
   repeated ServerConfig brokers = 4;
   repeated uint32 topics = 5;
+  repeated uint32 leadingtopics = 6;
 }

@@ -2,7 +2,7 @@
 
 util::Timer::Timer()
 {
-	
+	set_tick_duration(1);
 }
 
 util::Timer::Timer(int const& tick_duration, int timeout)

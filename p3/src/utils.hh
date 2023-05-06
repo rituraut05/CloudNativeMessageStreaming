@@ -37,18 +37,6 @@ using util::Timer;
 #define HEART   "\xE2\x99\xA5"
 #define SPADE   "\xE2\x99\xA0"
 
-#define BROKER_COUNT brokersInCluster.size()
-
-//// Added for testing, remove after getConfig API is written ////
-
-// #define BROKER_CNT              3
-// #define SERVER1 "0.0.0.0:50052" // node1
-// #define SERVER2 "0.0.0.0:50053" // node2
-// #define SERVER3 "0.0.0.0:50054" // node3
-// string serverIPs[BROKER_CNT] = {SERVER1, SERVER2, SERVER3};
-
-////////////////////////////////////////////////////////////
-
 typedef leveldb::DB *leveldbPtr;
 
 enum State {FOLLOWER, CANDIDATE, LEADER};
@@ -67,7 +55,6 @@ unordered_map<int, int> lastLogIndex; // valid index starts from 1
 std::shared_mutex mutex_ci; // for commitIndex
 std::shared_mutex mutex_lli; // for lastLogIndex
 std::shared_mutex mutex_votes; // for votesReceived
-std::shared_mutex mutex_leader; // for leaderID
 std::shared_mutex mutex_cs; // for currState
 std::shared_mutex mutex_er; // for electionRunning
 std::shared_mutex mutex_ct; // for currentTerm
@@ -78,6 +65,8 @@ std::shared_mutex mutex_mi; // for matchIndex
 std::shared_mutex mutex_ni; // for nextIndex
 std::shared_mutex mutex_logs; // for logs
 std::shared_mutex mutex_messageQ; // for messageQueue
+std::shared_mutex mutex_tul; // for topicsUnderLeadership
+std::shared_mutex mutex_sle; // for sendLogEntries
 
 
 
@@ -98,6 +87,7 @@ unordered_map<int, leveldbPtr> pmetadata;
 */
 unordered_map<int, leveldbPtr> replicateddb;
 
+// topicid - commitIndex
 unordered_map<int, int> commitIndex;
 
 unordered_map<int, bool> updateCommitIndexFlag;

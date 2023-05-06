@@ -32,6 +32,10 @@ using dps::StartElectionResponse;
 using dps::ClusterConfigRequest;
 using dps::ClusterConfigResponse;
 using dps::ServerConfig;
+using dps::SetLeaderRequest;
+using dps::SetLeaderResponse;
+using dps::BrokerUpRequest;
+using dps::BrokerUpResponse;
 using util::Timer;
 
 #define BROKER_ALIVE_TIMEOUT    5000
@@ -64,6 +68,7 @@ unordered_map<int, vector<int>> publisherToTopicsMap; // required?
 unordered_map<int, vector<int>> subscriberToTopicsMap;
 
 shared_mutex mutex_tlm; // lock for topicToLeaderMap
+shared_mutex mutex_ltm; // lock for leaderToTopicsMap
 
 // **************************** Functions ********************************
 
@@ -120,8 +125,21 @@ class GuruGrpcServer final : public GuruServer::Service {
 
       brokerAliveTimers[brokerid].reset(BROKER_ALIVE_TIMEOUT);
       if(!brokers[brokerid].alive) {
+        printf("[Heartbeat] Broker %d now alive!\n", brokerid);
         brokers[brokerid].alive = true;
-        // TODO: send BrokerUp calls to other brokers in cluster 
+        uint clusterid = brokers[brokerid].clusterid;
+        Cluster config;
+        for(Cluster c: clusters) {
+          if(c.clusterid == clusterid) {
+            config = c;
+            break;
+          }
+        }
+        for(uint brokeridInCluster: config.brokers) {
+          if(brokeridInCluster != brokerid) {
+            brokers[brokeridInCluster].gbClient->BrokerUp(brokerid);
+          }
+        }
       }
 
       for(Cluster c: clusters) {
@@ -131,6 +149,7 @@ class GuruGrpcServer final : public GuruServer::Service {
               brokerAliveTimers[servid].get_tick() > BROKER_ALIVE_TIMEOUT) {
               printf("[SendHeartbeat] Brokerid: %d in cluster %d down.\n", servid, c.clusterid);
               brokers[servid].alive = false;
+              mutex_ltm.lock();
               for(int topicid: leaderToTopicsMap[servid]) {
                 printf("[SendHeartbeat] Triggering election for topic %d in cluster %d.\n", topicid, c.clusterid);
                 for(uint bid: c.brokers) {
@@ -148,6 +167,7 @@ class GuruGrpcServer final : public GuruServer::Service {
                 mutex_tlm.unlock();
               }
               leaderToTopicsMap[servid].clear();
+              mutex_ltm.unlock();
             }
           }
         }
@@ -181,6 +201,45 @@ class GuruGrpcServer final : public GuruServer::Service {
       for(uint tpcid: config.topics) {
         response->add_topics(tpcid);
       }
+      mutex_ltm.lock();
+      for(uint tpcid: leaderToTopicsMap[brokerid]) {
+        response->add_leadingtopics(tpcid);
+      }
+      mutex_ltm.unlock();
+      return Status::OK;
+    }
+
+    Status SetLeader(ServerContext *contect, const SetLeaderRequest *request, SetLeaderResponse *response) override
+    {
+      uint leaderid = request->leaderid();
+      uint topicid = request->topicid();
+      uint clusterid = topicToClusterMap[topicid];  
+
+      printf("[SetLeader] Setting leader = %d in cluster %d for topic %d.\n", leaderid, clusterid, topicid);
+
+      Cluster config;
+      for(Cluster c: clusters) {
+        if(c.clusterid == clusterid) {
+          config = c;
+          break;
+        }
+      }
+
+      mutex_tlm.lock();
+      topicToLeaderMap[topicid] = leaderid;
+      mutex_tlm.unlock();
+
+      config.addTopic(topicid);
+      mutex_ltm.lock();
+      if(leaderToTopicsMap.find(leaderid) == leaderToTopicsMap.end()) {
+        vector<int> tpcs;
+        tpcs.push_back(topicid);
+        leaderToTopicsMap[leaderid] = tpcs;
+      } else {
+        leaderToTopicsMap[leaderid].push_back(topicid);
+      }
+      mutex_ltm.unlock();
+
       return Status::OK;
     }
 };
@@ -207,6 +266,29 @@ int GuruToBrokerClient::StartElection(int topicID) {
       printf("[StartElection]: GuruToBrokerClient - Unavailable server\n");
     }
     printf("[StartElection]: RPC Failure\n");
+    return -1;
+  }
+}
+
+int GuruToBrokerClient::BrokerUp(int brokerid) {
+  BrokerUpRequest request;
+  BrokerUpResponse reply;
+  Status status;
+  ClientContext context;
+
+  request.set_brokerid(brokerid);
+  reply.Clear();
+
+  status = stub_->BrokerUp(&context, request, &reply);
+
+  if(status.ok()) {
+    printf("[BrokerUp] GuruToBrokerClient - RPC Success: Informed that %d is up.\n", brokerid);
+    return 0;
+  } else {
+    if(status.error_code() == StatusCode::UNAVAILABLE){
+      printf("[BrokerUp]: GuruToBrokerClient - Unavailable server\n");
+    }
+    printf("[BrokerUp]: RPC Failure\n");
     return -1;
   }
 }
