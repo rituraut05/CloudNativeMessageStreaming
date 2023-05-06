@@ -556,6 +556,9 @@ void initNewTopic(int topicid) {
   mutex_vf.lock();
   votedFor[topicid] = -1;
   mutex_vf.unlock();
+  mutex_la.lock();
+  lastApplied[topicid] = -1;
+  mutex_la.unlock();
   mutex_votes.lock();
   votesReceived[topicid] = 0;
   mutex_votes.unlock();
