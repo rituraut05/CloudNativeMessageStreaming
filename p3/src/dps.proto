@@ -13,7 +13,7 @@ service BrokerServer
   rpc RequestVote (RequestVoteRequest) returns (RequestVoteResponse) {}
   
   // data streaming APIs 
-  rpc SendMessage(SendMessageRequest) returns (SendMessageResponse) {}
+  rpc PublishMessage(PublishMessageRequest) returns (PublishMessageResponse) {}
   rpc ReadMessageStream(ReadMessageRequest) returns (stream ReadMessageResponse) {}
 }
 
@@ -62,8 +62,6 @@ message RequestVoteResponse {
   bool voteGranted = 2;
 }
 
-message SendMessageRequest { }
-message SendMessageResponse { }
 message ReadMessageRequest {
   uint32 index = 1;
   uint32 topic = 2;
@@ -71,6 +69,13 @@ message ReadMessageRequest {
 message ReadMessageResponse {
   string message = 1;  
  }
+message PublishMessageRequest {
+  uint32 topicId = 1;
+  string message = 2;
+ }
+message PublishMessageResponse { 
+  uint32 db_errno = 1;
+}
 
 service GuruServer
 {

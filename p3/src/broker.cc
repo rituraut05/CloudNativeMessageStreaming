@@ -41,6 +41,8 @@ using dps::ClusterConfigResponse;
 using dps::ServerConfig;
 using dps::AppendEntriesRequest;
 using dps::AppendEntriesResponse;
+using dps::PublishMessageRequest;
+using dps::PublishMessageResponse;
 using dps::LogEntry;
 using dps::BrokerUpRequest;
 using dps::BrokerUpResponse;
@@ -715,6 +717,45 @@ class BrokerGrpcServer final : public BrokerServer::Service {
     mutex_sle.lock();
     sendLogEntries[brokerupid] = true;
     mutex_sle.unlock();
+  }
+
+  Status PublishMessage(ServerContext *context, const PublishMessageRequest *req, PublishMessageResponse *resp) override
+  {
+    int topicId = req->topicid();
+    printf("[PublishMessage] Request invoked for Topic ID: %d\n", topicId);
+    if(currStateMap[topicId] != LEADER){
+      printf("[PublishMessage] I am not the LEADER. Contact GURU! \n");
+      resp->set_db_errno(EPERM);
+      return Status::OK;
+    }
+
+    string message = req->message();
+
+    mutex_lli.lock();
+    int lli = ++lastLogIndex[topicId];
+    mutex_lli.unlock();
+        
+    mutex_ct.lock();
+    int term = currentTerm[topicId];
+    mutex_ct.unlock();
+
+    Log logEntry = Log(lli, term, topicId, lli, message);
+
+    mutex_logs.lock();
+    logs[topicId].push_back(logEntry);
+    mutex_logs.unlock();
+
+    // leveldb::Status logstatus = plogs->Put(leveldb::WriteOptions(), to_string(logEntry.index), logEntry.toString());
+    while(true) {
+      mutex_ci.lock();
+      if(commitIndex[topicId] >= lli) {
+        mutex_ci.unlock();
+        break;
+      } 
+      mutex_ci.unlock();
+    }
+    printf("[PublishMessage] Success\n");
+    printRaftLog();
     return Status::OK;
   }
 };

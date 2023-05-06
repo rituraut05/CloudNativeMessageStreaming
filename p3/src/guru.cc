@@ -36,6 +36,8 @@ using dps::SetLeaderRequest;
 using dps::SetLeaderResponse;
 using dps::BrokerUpRequest;
 using dps::BrokerUpResponse;
+using dps::GetBrokerRequest;
+using dps::GetBrokerResponse;
 using util::Timer;
 
 #define BROKER_ALIVE_TIMEOUT    5000
@@ -242,6 +244,22 @@ class GuruGrpcServer final : public GuruServer::Service {
 
       return Status::OK;
     }
+
+  Status GetBrokerForWrite(ServerContext *contect, const GetBrokerRequest *request, GetBrokerResponse *response) override
+  {
+    int topicId = request->topicid();
+
+    printf("[GetBrokerForWrite] Request received for topic %d.\n", topicId);
+    mutex_tlm.lock();
+    int brokerId = topicToLeaderMap[topicId];
+    mutex_tlm.unlock();
+    
+    string brokerAddr = brokers[brokerId].server_addr;
+
+    response->set_brokerid(brokerId);
+    response->set_brokeraddr(brokerAddr);
+    return Status::OK;
+  }
 };
 
 GuruToBrokerClient::GuruToBrokerClient(shared_ptr<Channel> channel)
