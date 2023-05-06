@@ -389,6 +389,12 @@ int main(int argc, char* argv[]) {
   int cid = addCluster(3, C0_ADDRESSES);
   clusters[0].print();
 
+  //init topic
+  clusters[0].addTopic(1);
+  topicToLeaderMap[1] = 1;
+  vector<int> v = {1};
+  leaderToTopicsMap[1] = v;
+
   // Have to write addTopic() : wait for it! 
   
   thread checkLeaderElectionsThread(checkLeaderElections);
