@@ -60,7 +60,6 @@ std::shared_mutex mutex_er; // for electionRunning
 std::shared_mutex mutex_ct; // for currentTerm
 std::shared_mutex mutex_la; // for lastApplied
 std::shared_mutex mutex_vf; // for votedFor
-std::shared_mutex mutex_ucif; // for updateCommitIndexFlag
 std::shared_mutex mutex_mi; // for matchIndex
 std::shared_mutex mutex_ni; // for nextIndex
 std::shared_mutex mutex_logs; // for logs
@@ -89,8 +88,6 @@ unordered_map<int, leveldbPtr> replicateddb;
 
 // topicid - commitIndex
 unordered_map<int, int> commitIndex;
-
-unordered_map<int, bool> updateCommitIndexFlag;
 
 unordered_map<int , bool> sendLogEntries;
 
