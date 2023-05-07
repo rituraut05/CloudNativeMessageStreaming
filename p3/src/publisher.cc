@@ -5,6 +5,7 @@
 #include <ctime>
 #include <unistd.h>
 #include <grpcpp/grpcpp.h>
+#include <shared_mutex>
 
 #include "dps.grpc.pb.h"
 #include "common.hh"
@@ -15,6 +16,7 @@ using std::stoi;
 using std::string;
 using std::shared_ptr;
 using std::unique_ptr;
+using std::shared_mutex;
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -31,9 +33,11 @@ typedef unique_ptr<BrokerServer::Stub> BrokerStub;
 typedef unique_ptr<GuruServer::Stub> GuruStub;
 
 // *************************** Volatile Variables *****************************
-uint brokerId;
+uint brokerId = 0;
 string brokerAddr;
 string message;
+int retry = 5;
+shared_mutex mutex_brokerId; 
 
 class Publisher {
   public:
@@ -67,7 +71,9 @@ int Publisher::GetBrokerForWrite(int topicId){
 
   if(status.ok()){
     printf("[GetBrokerForWrite] Publish messages to Broker : %d at address: %s.\n", response.brokerid(), response.brokeraddr().c_str());
+    mutex_brokerId.lock();
     brokerId = response.brokerid();
+    mutex_brokerId.unlock();
     brokerAddr = response.brokeraddr();
     this->brokerstub_ = BrokerServer::NewStub(grpc::CreateChannel(brokerAddr, grpc::InsecureChannelCredentials()));
     return 0;
@@ -92,6 +98,7 @@ int Publisher::PublishMessage(int topicId, string message){
   if(status.ok()){
     if(response.db_errno() == EPERM){
       printf("[PublishMessage] Broker has changed. Contact GURU!\n");
+      this->GetBrokerForWrite(topicId);
       return -1;
     }
     printf("[PublishMessage] Published message!\n");
@@ -120,7 +127,6 @@ std::string gen_random(const int len) {
 int main(int argc, char* argv[]) {
   char c = '\0';
   int topicId = -1;
-  int brokerId = 0;
   int msgLength = 8;
 
   // Get command line args
@@ -131,7 +137,9 @@ int main(int argc, char* argv[]) {
         printf("TopicID: %d\n", topicId);
         break;
       case 'b':
+        mutex_brokerId.lock();
         brokerId = stoi(optarg);
+        mutex_brokerId.unlock();
         printf("BrokerID: %d\n", brokerId);
         break;
       case 'l':
@@ -146,18 +154,29 @@ int main(int argc, char* argv[]) {
 
   if(topicId == -1){
     printf("TopicID is a required argument! Add using -t <topicId>\n");
-    return 0;
+    return -1;
   }
 
   //getBrokerForWrite(topicId)
   publishClient = new Publisher(grpc::CreateChannel(GURU_ADDRESS, grpc::InsecureChannelCredentials()));
 
-  int getBroker = publishClient->GetBrokerForWrite(topicId);
-  assert(getBroker == 0);
+  if(brokerId > 2){
+    int getBroker = publishClient->GetBrokerForWrite(topicId);
+    assert(getBroker == 0);
+  } else {
+    publishClient->brokerstub_ = BrokerServer::NewStub(grpc::CreateChannel(C0_ADDRESSES[brokerId], grpc::InsecureChannelCredentials()));
+  }
 
   message = gen_random(msgLength);
   cout<<message<<endl;
   int published = publishClient->PublishMessage(topicId, message);
-  if(published != -1) return -1;
-  return 0;
+  while(published != 0 && retry > 0){
+    published = publishClient->PublishMessage(topicId, message);
+    retry--;
+  }
+  mutex_brokerId.lock();
+  printf("BrokerID: %d", brokerId);
+  mutex_brokerId.unlock();
+  // if(published == -1) return -1;
+  return brokerId;
 }
