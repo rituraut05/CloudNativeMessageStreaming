@@ -156,9 +156,10 @@ int main(int argc, char* argv[]) {
   char c = '\0';
   int topicId = -1;
   int msgLength = 8;
+  bool newTopicReq = false;
 
   // Get command line args
-  while ((c = getopt(argc, argv, "t:b:l:")) != -1) {
+  while ((c = getopt(argc, argv, "t:b:l:n:")) != -1) {
     switch (c){
       case 't':
         topicId = stoi(optarg);
@@ -174,25 +175,35 @@ int main(int argc, char* argv[]) {
         msgLength = stoi(optarg);
         printf("Message length: %d\n", msgLength);
         break;
+      case 'n':
+        topicId = stoi(optarg);
+        printf("Adding new topic: %d\n", topicId);
+        newTopicReq = true;
+        break;
       default:
         cout << "Invalid arg" << endl;
         return -1;
     }
   }
 
-  if(topicId == -1){
+  publishClient = new Publisher(grpc::CreateChannel(GURU_ADDRESS, grpc::InsecureChannelCredentials()));
+
+  if(newTopicReq){
+    int addTopicRet = publishClient->AddTopic(topicId);
+    return addTopicRet;
+  } else if(topicId == -1){
     printf("TopicID is a required argument! Add using -t <topicId>\n");
     return -1;
   }
 
   //getBrokerForWrite(topicId)
-  publishClient = new Publisher(grpc::CreateChannel(GURU_ADDRESS, grpc::InsecureChannelCredentials()));
+  // publishClient = new Publisher(grpc::CreateChannel(GURU_ADDRESS, grpc::InsecureChannelCredentials()));
 
   // if(brokerId > 2){
   //   int getBroker = publishClient->GetBrokerForWrite(topicId);
   //   assert(getBroker == 0);
   // } else {
-  //   publishClient->brokerstub_ = BrokerServer::NewStub(grpc::CreateChannel(C0_ADDRESSES[brokerId], grpc::InsecureChannelCredentials()));
+  //   publishClient->brokerstub_ = BrokerServer::NewStub(grpc::CreateChannel(C_ADDRESSES[][brokerId], grpc::InsecureChannelCredentials()));
   // }
 
   //addtopic, get leader
