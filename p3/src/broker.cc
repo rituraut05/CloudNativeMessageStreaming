@@ -231,6 +231,8 @@ int BrokerToGuruClient::RequestConfig(int brokerid) {
   status = gurustub_->RequestConfig(&context, request, &response);
 
   if(status.ok()) {
+    if(!response.success())
+      return 1;
     printf("[RequestConfig] Setting clusterID = %d.\n", response.clusterid());
     clusterID = response.clusterid();
     brokersInCluster.clear();
@@ -1031,7 +1033,11 @@ int main(int argc, char* argv[]) {
   serverID = atoi(argv[1]);
   bgClient = new BrokerToGuruClient(grpc::CreateChannel(GURU_ADDRESS, grpc::InsecureChannelCredentials()));
 
-  int rc_ret = bgClient->RequestConfig(serverID);
+  int rc_ret = 1;
+  while(rc_ret == 1) {
+    rc_ret = bgClient->RequestConfig(serverID);
+    sleep(10);
+  }
   assert(rc_ret == 0);
   openOrCreateDBs();
   initializePersistedValues();

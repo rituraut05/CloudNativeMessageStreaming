@@ -9,7 +9,7 @@
 
 #define GURU_ADDRESS "0.0.0.0:50050"
 
-#define TOPICS_PER_CLUSTER_THRESHOLD 10
+#define TOPICS_PER_CLUSTER_THRESHOLD 3
 
 
 using std::string;

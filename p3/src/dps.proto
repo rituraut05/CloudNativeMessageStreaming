@@ -141,4 +141,5 @@ message ClusterConfigResponse {
   repeated ServerConfig brokers = 4;
   repeated uint32 topics = 5;
   repeated uint32 leadingtopics = 6;
+  bool success = 7;
 }

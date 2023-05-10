@@ -81,7 +81,7 @@ shared_mutex mutex_tcm; // lock for topicToClusterMap
 
 int addCluster(uint clustersize, string addrs[]) {
   uint newClusterId = clusters.size();
-  uint newBrokerId = brokers.size();
+  uint newBrokerId = newClusterId*3;
   Cluster c_new(newClusterId);
   for(int i = 0; i<clustersize; i++) {
     ServerInfo si(newBrokerId + i, newClusterId, addrs[i]);
@@ -231,15 +231,22 @@ class GuruGrpcServer final : public GuruServer::Service {
       uint brokerid = request->serverid();
       uint clusterid = brokers[brokerid].clusterid;
 
-      printf("[RequestConfig] Sending ClusterConfig for cluster %d to broker %d.\n", clusterid, brokerid);
+      // printf("[RequestConfig] Sending ClusterConfig for cluster %d to broker %d.\n", clusterid, brokerid);
 
       Cluster config;
+      bool clusterFound = false;
       for(Cluster c: clusters) {
         if (c.clusterid == clusterid) {
           config = c;
+          clusterFound = true;
           break;
         }
       }
+
+      if(!clusterFound)
+        response->set_success(false);
+      else
+        response->set_success(true);
 
       response->set_serverid(brokerid);
       response->set_clusterid(clusterid);
