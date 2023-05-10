@@ -345,12 +345,12 @@ void invokeAppendEntries(int followerid) {
 }
 
 void updateLog(int topicId, std::vector<LogEntry> logEntries, int logIndex, int leaderCommitIndex){
-  printf("[Broker(Raft)Server:AppendEntries]logs need update--int logIndex, int leaderCommitIndex: %d, %d\n", logIndex, leaderCommitIndex);
+  // printf("[Broker(Raft)Server:AppendEntries]logs need update--int logIndex, int leaderCommitIndex: %d, %d\n", logIndex, leaderCommitIndex);
   Log logEntry;
   // logs[topicId].erase(logs[topicId].begin()+logIndex, logs[topicId].end());
   // delete from DB
   for(auto itr = logEntries.begin(); itr != logEntries.end(); itr++){
-    printf("[Broker(Raft)Server:AppendEntries]adding entry\n");
+    // printf("[Broker(Raft)Server:AppendEntries]adding entry\n");
     logEntry = Log(itr->index(), itr->term(), itr->topicid(), itr->messageindex(), itr->message());
     logs[topicId].push_back(logEntry);
     plogs[topicId]->Put(leveldb::WriteOptions(), to_string(logEntry.index), logEntry.toString());
@@ -780,7 +780,7 @@ class BrokerGrpcServer final : public BrokerServer::Service {
     int currTermLocal = currentTerm[topicId];
     mutex_ct.unlock();
     if(request->term() >= currTermLocal){
-      printf("[Broker(Raft)Server:AppendEntries]Condn satisfied: request->term() >= currentTerm[topicId]\n");
+      // printf("[Broker(Raft)Server:AppendEntries]Condn satisfied: request->term() >= currentTerm[topicId]\n");
 
       if(request->term() > currTermLocal){
         mutex_ct.lock();
@@ -818,7 +818,7 @@ class BrokerGrpcServer final : public BrokerServer::Service {
       if(leaderCommitIndex > commitIndex[topicId]) {
         commitIndex[topicId] = std::min(leaderCommitIndex, lastLogIndex[topicId]);
         rpcSuccess = true;
-        printf("new commit index: %d", commitIndex[topicId]);
+        // printf("new commit index: %d", commitIndex[topicId]);
         // printRaftLog();
       }
       mutex_lli.unlock();

@@ -1,5 +1,7 @@
 #include <grpcpp/grpcpp.h>
 #include <string>
+#include <chrono>
+
 
 #include "utils.hh"
 #include "common.hh"
@@ -18,6 +20,10 @@ using std::stoi;
 using std::string;
 using std::shared_ptr;
 using std::unique_ptr;
+using std::chrono::high_resolution_clock;
+using std::chrono::duration_cast;
+using std::chrono::duration;
+using std::chrono::milliseconds;
 
 using dps::BrokerServer;
 using dps::GuruServer;
@@ -60,6 +66,7 @@ typedef unique_ptr<GuruServer::Stub> GuruStub;
 // *************************** Volatile Variables *****************************
 uint brokerId;
 string brokerAddr;
+int count = 0;
 
 
 class Subscriber {
@@ -78,7 +85,7 @@ Subscriber* subClient;
 Subscriber::Subscriber(shared_ptr<Channel> guruchannel) 
   : gurustub_(GuruServer::NewStub(guruchannel)) 
 {
-  printf("------------ Opened channel to Guru -------------\n");
+  // printf("------------ Opened channel to Guru -------------\n");
 }
 
 int Subscriber::GetBrokerForRead(int topicId){
@@ -92,7 +99,7 @@ int Subscriber::GetBrokerForRead(int topicId){
   status = gurustub_->GetBrokerForRead(&context, request, &response);
 
   if(status.ok()){
-    printf("[GetBrokerForRead] Read messages from Broker : %d at address: %s.\n", response.brokerid(), response.brokeraddr().c_str());
+    // printf("[GetBrokerForRead] Read messages from Broker : %d at address: %s.\n", response.brokerid(), response.brokeraddr().c_str());
     brokerId = response.brokerid();
     brokerAddr = response.brokeraddr();
     this->brokerstub_ = BrokerServer::NewStub(grpc::CreateChannel(brokerAddr, grpc::InsecureChannelCredentials()));
@@ -118,14 +125,25 @@ int Subscriber::ReadMessageStream(int topicId, int index)
             this->brokerstub_->ReadMessageStream(&context, request));
 
   int readInd = 0;
+  auto t1 = high_resolution_clock::now();
   while (reader->Read(&response)) {
-      printf("Message: %s %d\n", response.message().c_str(), response.readind());
+      // printf("Message: %s %d\n", response.message().c_str(), response.readind());
       readInd = response.readind();
+      count++;
   }
-  printf("Read till %d index\n", readInd);
+  auto t2 = high_resolution_clock::now();
+
+  /* Getting number of milliseconds as an integer. */
+  auto ms_int = duration_cast<milliseconds>(t2 - t1);
+
+  /* Getting number of milliseconds as a double. */
+  duration<double, std::milli> ms_double = t2 - t1;
+  // printf("took: %f ms\n",ms_double.count());
+  printf("tput: %f\n", count*1000/ms_double.count());
+  // printf("Read till %d index\n", readInd);
   status = reader->Finish();
   if(status.ok()){
-    printf("[ReadMessageStream] Read message!\n");
+    // printf("[ReadMessageStream] Read %d message(s)!\n", count);
     return readInd;
   } else {
     printf("[ReadMessageStream] Unable to reach broker for this topic, please retry.\n");
@@ -139,6 +157,7 @@ int main(int argc, char* argv[]) {
   int topicId = -1;
   int brokerId = 0;
   int index = 0;
+  
 
   // Get command line args
   while ((c = getopt(argc, argv, "t:b:i:")) != -1) {

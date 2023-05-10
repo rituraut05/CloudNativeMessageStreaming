@@ -1,0 +1,1427 @@
+tput: 13.977057
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+rituraut@node1:~/cs739/p3/src/build$ ./subscriber -t1
+TopicID: 1
+------------ Opened channel to Guru -------------
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+took: 5114.837019 mstput: 12.326492
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+rituraut@node1:~/cs739/p3/src/build$ ./subscriber -t1
+TopicID: 1
+------------ Opened channel to Guru -------------
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+took: 5453.541223 ms
+tput: 11560.928472
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+rituraut@node1:~/cs739/p3/src/build$ ./subscriber -t1
+TopicID: 1
+------------ Opened channel to Guru -------------
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+took: 5619.624984 ms
+tput: 11219.253986
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+rituraut@node1:~/cs739/p3/src/build$ ./subscriber -t1
+TopicID: 1
+------------ Opened channel to Guru -------------
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+took: 5687.793619 ms
+tput: 11084.790382
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+rituraut@node1:~/cs739/p3/src/build$ ./subscriber -t1
+TopicID: 1
+------------ Opened channel to Guru -------------
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+took: 5002.485914 ms
+tput: 12603.333839
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+rituraut@node1:~/cs739/p3/src/build$ ./subscriber -t1
+TopicID: 1
+------------ Opened channel to Guru -------------
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+took: 5145.387888 ms
+tput: 12253.303613
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+
+
+//2
+took: 5557.323027 ms
+tput: 11345.030637
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5583.300248 ms
+tput: 11292.246019
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+//4
+took: 4290.035529 ms
+tput: 14696.381784
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+rituraut@node1:~/cs739/p3/src/build$ took: 4887.938919 ms
+tput: 12898.688188
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5062.692393 ms
+tput: 12453.452650
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5126.312689 ms
+tput: 12298.898609
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+
+//8
+took: 4925.253304 ms
+tput: 12800.965983
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 4985.109610 ms
+tput: 12647.264540
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5090.617284 ms
+tput: 12385.138478
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5713.696157 ms
+tput: 11034.538461
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5719.795135 ms
+tput: 11022.772409
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5730.583424 ms
+tput: 11002.021144
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5741.238838 ms
+tput: 10981.602016
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 6032.467721 ms
+tput: 10451.444237
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+
+//16
+took: 5440.003056 ms
+tput: 11589.699372
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5526.809383 ms
+tput: 11407.666817
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5578.996469 ms
+tput: 11300.957144
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5734.078037 ms
+tput: 10995.316003
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5834.416973 ms
+tput: 10806.221134
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5866.142909 ms
+tput: 10747.777710
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5912.085842 ms
+tput: 10664.256522
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5944.400972 ms
+tput: 10606.283173
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5955.264836 ms
+tput: 10586.934710
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 6026.072188 ms
+tput: 10462.536464
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 6037.186205 ms
+tput: 10443.275701
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 6032.078581 ms
+tput: 10452.118478
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 6063.035355 ms
+tput: 10398.751831
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 6095.563506 ms
+tput: 10343.260297
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 6127.751810 ms
+tput: 10288.928461
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 6184.599878 ms
+tput: 10194.353918
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+
+//32
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+took: 6666.333579 ms
+took: 6689.738262 ms
+tput: 9457.672535
+tput: 9424.583972
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 6786.241187 ms
+tput: 9290.562811
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 6913.246138 ms
+tput: 9119.883589
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 7177.146366 ms
+tput: 8784.549845
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 7195.512693 ms
+tput: 8762.127549
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 7302.274542 ms
+tput: 8634.022131
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 7323.184293 ms
+tput: 8609.369569
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 7559.952660 ms
+tput: 8339.734762
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 7654.099315 ms
+tput: 8237.154681
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 7947.414523 ms
+tput: 7933.146034
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 8083.391683 ms
+tput: 7799.696275
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 8101.838437 ms
+tput: 7781.937457
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 8171.555282 ms
+tput: 7715.544694
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 8220.759352 ms
+tput: 7669.364508
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 8280.458899 ms
+tput: 7614.070762
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 8576.666192 ms
+tput: 7351.108063
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 8679.031465 ms
+tput: 7264.405050
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 8706.985388 ms
+tput: 7241.082555
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 8737.881498 ms
+tput: 7215.478948
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 8780.640793 ms
+tput: 7180.341559
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 8991.511097 ms
+tput: 7011.947082
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 9034.734730 ms
+tput: 6978.400793
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 9183.907971 ms
+tput: 6865.051370
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 9143.802165 ms
+tput: 6895.162304
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 9302.875524 ms
+tput: 6777.259336
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 9331.877135 ms
+tput: 6756.196967
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 9719.281363 ms
+tput: 6486.899355
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 8719.749930 ms
+tput: 7230.482583
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 9845.052364 ms
+tput: 6404.028914
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 9878.834525 ms
+tput: 6382.129374
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 5583.407424 ms
+tput: 11292.029260
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+
+//64
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 1 at address: c220g1-030809:50052.
+[GetBrokerForRead] Read messages from Broker : 0 at address: c220g1-030829:50051.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+[GetBrokerForRead] Read messages from Broker : 2 at address: c220g1-030815:50053.
+took: 7614.414132 ms
+tput: 8280.085494
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 10878.444526 ms
+tput: 5795.681529
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 11815.612673 ms
+tput: 5335.990756
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 12056.959467 ms
+tput: 5229.179062
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 12275.773181 ms
+tput: 5135.969773
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 12649.870147 ms
+tput: 4984.082782
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 13000.491058 ms
+tput: 4849.662964
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 13164.676326 ms
+tput: 4789.179653
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 13354.454216 ms
+tput: 4721.121431
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 13664.759583 ms
+tput: 4613.912130
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 13873.455908 ms
+tput: 4544.505739
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 13889.169729 ms
+tput: 4539.364212
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 13896.853607 ms
+tput: 4536.854297
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 14032.104666 ms
+tput: 4493.124980
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 14303.997375 ms
+tput: 4407.718930
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 14505.212587 ms
+tput: 4346.575386
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 14747.046102 ms
+tput: 4275.296867
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 14649.171978 ms
+tput: 4303.861003
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 14933.468182 ms
+tput: 4221.926162
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 14931.264801 ms
+tput: 4222.549184
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 15026.940799 ms
+tput: 4195.664363
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 15037.646970 ms
+tput: 4192.677227
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 15195.086643 ms
+tput: 4149.235966
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 15302.003772 ms
+tput: 4120.244704
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 15487.364661 ms
+tput: 4070.931458
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 15860.009619 ms
+tput: 3975.281322
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 16026.126686 ms
+tput: 3934.075977
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 16118.535697 ms
+tput: 3911.521567
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 11552.138234 ms
+tput: 5457.690925
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 16571.852988 ms
+tput: 3804.523251
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 16717.885494 ms
+tput: 3771.290336
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 17054.846413 ms
+tput: 3696.779113
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 17134.539591 ms
+tput: 3679.585300
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 16973.396013 ms
+tput: 3714.518883
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 17385.863866 ms
+tput: 3626.394437
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 17326.291788 ms
+tput: 3638.862878
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 11417.846524 ms
+tput: 5521.881895
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 17582.602881 ms
+tput: 3585.817210
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 17398.725797 ms
+tput: 3623.713641
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 17717.216317 ms
+tput: 3558.572570
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 17785.051819 ms
+tput: 3544.999511
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 17917.074263 ms
+tput: 3518.878087
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18028.843692 ms
+tput: 3497.062878
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18088.693111 ms
+tput: 3485.492269
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18244.132327 ms
+tput: 3455.796026
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18259.919073 ms
+tput: 3452.808293
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18493.536900 ms
+tput: 3409.191024
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18565.534206 ms
+tput: 3395.970151
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18579.082587 ms
+tput: 3393.493716
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18673.124307 ms
+tput: 3376.403379
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18651.146330 ms
+tput: 3380.382036
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18756.355677 ms
+tput: 3361.420581
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18564.851732 ms
+tput: 3396.094992
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18682.313094 ms
+tput: 3374.742714
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18821.817207 ms
+tput: 3349.729694
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 17913.313514 ms
+tput: 3519.616845
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 12913.283187 ms
+tput: 4882.414417
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18951.596005 ms
+tput: 3326.791051
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18797.478502 ms
+tput: 3354.066876
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 19087.415878 ms
+tput: 3303.118683
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18070.213458 ms
+tput: 3489.056737
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 19246.266347 ms
+tput: 3275.856151
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 19314.302700 ms
+tput: 3264.316656
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 19372.529287 ms
+tput: 3254.505339
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+]]
+
+
+
+
+//128
+took: 9571.514240 ms
+tput: 6587.045521
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 15802.321018 ms
+tput: 3989.793647
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 18819.318543 ms
+tput: 3350.174442
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 19187.269532 ms
+tput: 3285.928719
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 19887.734915 ms
+tput: 3170.195111
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 19976.037243 ms
+tput: 3156.181541
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 20362.126077 ms
+tput: 3096.336785
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 22379.737019 ms
+tput: 2817.191281
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 22644.517404 ms
+tput: 2784.250107
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 22749.027265 ms
+tput: 2771.459160
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 22916.045355 ms
+tput: 2751.260046
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 21902.485136 ms
+tput: 2878.577459
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 23333.745225 ms
+tput: 2702.009446
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 22373.414823 ms
+tput: 2817.987352
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 17442.118988 ms
+tput: 3614.698423
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 24082.875373 ms
+tput: 2617.959817
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 24049.580459 ms
+tput: 2621.584194
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 19316.055711 ms
+tput: 3264.020406
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 24924.625352 ms
+tput: 2529.546547
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 25153.456222 ms
+tput: 2506.534269
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 25323.830287 ms
+took: 19146.587108 ms
+tput: 3292.910619
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+tput: 2489.670768
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 25396.172469 ms
+tput: 2482.578825
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 25448.084181 ms
+tput: 2477.514596
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 25208.622399 ms
+tput: 2501.049006
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 25624.790996 ms
+tput: 2460.429824
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 27158.015032 ms
+tput: 2321.524601
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 27130.341714 ms
+tput: 2323.892587
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 27231.875390 ms
+tput: 2315.227985
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 27452.365212 ms
+tput: 2296.632713
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 27667.103390 ms
+took: 27718.740203 ms
+tput: 2274.562247
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+tput: 2278.807402
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 27685.460286 ms
+tput: 2277.296435
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 27915.319958 ms
+tput: 2258.544774
+Read till 0 index
+took: 27882.563134 ms
+tput: 2261.198144
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+[ReadMessageStream] Read 63048 message(s)!
+took: 28641.174502 ms
+tput: 2201.306374
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 28634.065189 ms
+tput: 2201.852918
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 28389.096723 ms
+tput: 2220.852626
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 23432.671964 ms
+tput: 2690.602254
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 28784.172434 ms
+tput: 2190.370425
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 28861.402098 ms
+tput: 2184.509255
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 28908.267914 ms
+tput: 2180.967749
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 28912.178236 ms
+tput: 2180.672777
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 16772.444918 ms
+tput: 3759.022630
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 29158.625479 ms
+tput: 2162.241840
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 29466.894735 ms
+tput: 2139.621449
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 29784.422756 ms
+tput: 2116.811211
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 29939.098630 ms
+tput: 2105.875022
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 30105.153052 ms
+tput: 2094.259408
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 30171.575420 ms
+tput: 2089.648920
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 30439.722310 ms
+tput: 2071.240971
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 24539.494401 ms
+tput: 2569.246088
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 30909.441206 ms
+tput: 2039.765118
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 31039.390500 ms
+tput: 2031.225452
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 30954.624552 ms
+tput: 2036.787747
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 31253.857974 ms
+tput: 2017.286956
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 31336.538770 ms
+tput: 2011.964386
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 31394.741748 ms
+tput: 2008.234389
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 31244.689023 ms
+tput: 2017.878941
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 25679.714694 ms
+tput: 2455.167464
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 23890.322767 ms
+tput: 2639.060201
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 31340.134999 ms
+tput: 2011.733517
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 31346.924904 ms
+tput: 2011.297765
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 31315.322335 ms
+tput: 2013.327512
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 31822.683771 ms
+tput: 1981.228248
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 20825.475252 ms
+tput: 3027.445916
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 32055.661159 ms
+tput: 1966.828876
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 32154.876263 ms
+tput: 1960.760150
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 32422.238118 ms
+tput: 1944.591233
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 32137.797937 ms
+tput: 1961.802116
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 11460.553820 ms
+tput: 5501.304823
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 26468.839906 ms
+tput: 2381.970658
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 32497.733138 ms
+tput: 1940.073781
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 27599.802651 ms
+tput: 2284.364160
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 26693.419572 ms
+tput: 2361.930431
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 33055.280026 ms
+tput: 1907.350352
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 33362.301021 ms
+tput: 1889.797708
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 33305.302681 ms
+tput: 1893.031888
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 32520.632623 ms
+tput: 1938.707673
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 33521.062329 ms
+tput: 1880.847313
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 33732.038006 ms
+tput: 1869.083629
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 33904.057384 ms
+tput: 1859.600439
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 34275.293067 ms
+tput: 1839.459108
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 34269.026290 ms
+tput: 1839.795490
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 32660.432960 ms
+tput: 1930.409192
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 34784.542941 ms
+tput: 1812.529206
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 34806.763823 ms
+tput: 1811.372075
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 28735.558632 ms
+tput: 2194.076016
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 34586.316521 ms
+tput: 1822.917452
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 35396.351265 ms
+tput: 1781.200540
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 35302.334080 ms
+tput: 1785.944234
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 35666.076765 ms
+tput: 1767.730172
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 34037.885661 ms
+tput: 1852.288965
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 35612.279490 ms
+tput: 1770.400573
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 35862.181390 ms
+tput: 1758.063719
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 35932.754606 ms
+tput: 1754.610819
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 34919.102735 ms
+tput: 1805.544675
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 36079.080636 ms
+tput: 1747.494639
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 36112.930226 ms
+tput: 1745.856667
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 35902.107166 ms
+tput: 1756.108624
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 35926.327859 ms
+tput: 1754.924696
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 29413.499536 ms
+tput: 2143.505567
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 36074.331002 ms
+tput: 1747.724719
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 36394.262086 ms
+tput: 1732.360993
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 25109.933119 ms
+tput: 2510.878850
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 36459.688308 ms
+tput: 1729.252304
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 36639.791288 ms
+tput: 1720.752160
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 36844.915870 ms
+tput: 1711.172315
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 36823.256324 ms
+tput: 1712.178832
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 36906.615307 ms
+tput: 1708.311626
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 36799.004155 ms
+tput: 1713.307233
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 36622.433704 ms
+tput: 1721.567728
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 36667.792037 ms
+tput: 1719.438136
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 36850.087693 ms
+tput: 1710.932156
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 36847.472893 ms
+tput: 1711.053569
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 25594.983523 ms
+tput: 2463.295198
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 20755.254991 ms
+tput: 3037.688529
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 36998.233359 ms
+tput: 1704.081365
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 37419.471639 ms
+tput: 1684.898189
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 37033.408552 ms
+tput: 1702.462789
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 37153.720675 ms
+tput: 1696.949830
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 37279.385434 ms
+tput: 1691.229597
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 36442.986815 ms
+tput: 1730.044805
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 21502.773960 ms
+tput: 2932.086814
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 37312.159850 ms
+tput: 1689.744047
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 32290.591091 ms
+tput: 1952.519228
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 26537.530277 ms
+tput: 2375.805109
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+took: 25654.724810 ms
+tput: 2457.559006
+Read till 0 index
+[ReadMessageStream] Read 63048 message(s)!
+
+//256
+tput: 2655.353729
+tput: 2622.268572
+tput: 2138.693572
+tput: 2063.513701
+tput: 2043.958718
+tput: 1995.950415
+tput: 2087.948845
+tput: 1841.022232
+tput: 1801.569307
+tput: 1847.911684
+tput: 1717.903113
+tput: 1710.073476
+tput: 1663.072543
+tput: 1648.037231
+tput: 1695.695918
+tput: 1623.828951
+tput: 1579.089197
+tput: 1554.100434
+tput: 2055.756975
+tput: 1522.122405
+tput: 1494.059510
+tput: 1517.273545
+tput: 1446.093084
+tput: 1429.036257
+tput: 1416.047479
+tput: 1412.386114
+tput: 1399.313377
+tput: 1841.468313
+tput: 1398.003611
+tput: 1844.910859
+tput: 1389.343979
+tput: 1353.568149
+tput: 1360.800096
+tput: 1309.339327
+tput: 1761.564269
+tput: 1758.838434
+tput: 1252.282272
+tput: 1247.580988
+tput: 1247.278134
+tput: 1241.517553
+tput: 1397.262071
+tput: 1249.510287
+tput: 1249.177543
+tput: 1237.134287
+tput: 1224.824397
+tput: 1925.538272
+tput: 1703.423200
+tput: 1232.876032
+tput: 1223.940667
+tput: 1555.160558
+tput: 2028.845993
+tput: 1395.417916
+tput: 1173.822767
+tput: 1165.355227
+tput: 1334.653733
+tput: 1156.907289
+tput: 1175.099964
+tput: 1723.256532
+tput: 1221.300196
+tput: 1149.319325
+tput: 1140.890420
+tput: 1275.183516
+tput: 1138.516674
+tput: 1275.244842
+tput: 1135.057894
+tput: 1140.128233
+tput: 1125.368976
+tput: 1131.038063
+tput: 1272.117137
+tput: 1131.324690
+tput: 1112.856385
+tput: 1112.250892
+tput: 1114.198272
+tput: 1115.234375
+tput: 1104.959226
+tput: 1106.613257
+tput: 1100.158864
+tput: 1094.241127
+tput: 1087.200688
+tput: 1091.570410
+tput: 1256.794382
+tput: 1243.682936
+tput: 1074.499087
+tput: 1084.422419
+tput: 1077.895259
+tput: 1196.684370
+tput: 1155.304930
+tput: 1083.932115
+tput: 1183.048536
+tput: 1063.804291
+tput: 1058.811296
+tput: 1609.297361
+tput: 1061.835614
+tput: 1041.922462
+tput: 1296.581828
+tput: 1043.712834
+tput: 1041.090939
+tput: 1152.968744
+tput: 1083.646718
+tput: 1039.225016
+tput: 1477.126445
+tput: 1041.425810
+tput: 1173.017382
+tput: 1043.868924
+tput: 1025.922703
+tput: 1325.039893
+tput: 1025.049040
+tput: 1023.842883
+tput: 1249.609437
+tput: 1020.697441
+tput: 1029.160325
+tput: 1017.499372
+tput: 1109.446754
+tput: 1015.253667
+tput: 1020.537997
+tput: 1014.472017
+tput: 1319.818184
+tput: 1121.069637
+tput: 1013.399722
+tput: 1003.243274
+tput: 1001.530896
+tput: 1016.585236
+tput: 1003.809622
+tput: 1019.742234
+tput: 1001.508053
+tput: 1209.971314
+tput: 1080.942898
+tput: 995.299050
+tput: 1014.322098
+tput: 986.931615
+tput: 1211.323119
+tput: 986.967038
+tput: 983.871465
+tput: 1088.264495
+tput: 975.421560
+tput: 971.526642
+tput: 970.876712
+tput: 990.568136
+tput: 1182.775244
+tput: 1078.359407
+tput: 1175.121494
+tput: 1092.887452
+tput: 972.436007
+tput: 1157.497208
+tput: 980.462907
+tput: 962.241033
+tput: 962.505996
+tput: 1044.934167
+tput: 958.807869
+tput: 954.558996
+tput: 1308.843733
+tput: 1307.450390
+tput: 966.574169
+tput: 970.935602
+tput: 1059.719560
+tput: 952.929531
+tput: 1223.847948
+tput: 951.903774
+tput: 962.694997
+tput: 959.419690
+tput: 944.299284
+tput: 943.420707
+tput: 1139.595077
+tput: 1066.882113
+tput: 940.112575
+tput: 940.730530
+tput: 943.978000
+tput: 1150.188566
+tput: 933.547094
+tput: 1020.298971
+tput: 930.343895
+tput: 1063.851449
+tput: 924.596252
+tput: 922.744880
+tput: 1124.697510
+tput: 946.026214
+tput: 921.855890
+tput: 1303.640694
+tput: 930.557841
+tput: 932.208212
+tput: 1167.842722
+tput: 919.521155
+tput: 1007.818231
+tput: 921.075737
+tput: 907.358038
+tput: 905.849355
+tput: 1084.000111
+tput: 907.496953
+tput: 910.199103
+tput: 1089.743572
+tput: 903.729041
+tput: 907.585852
+tput: 908.119080
+tput: 922.026640
+tput: 1009.500534
+tput: 896.205158
+tput: 912.066427
+tput: 897.637731
+tput: 896.882346
+tput: 1016.644934
+tput: 1070.647554
+tput: 894.418632
+tput: 886.281195
+tput: 884.702706
+tput: 887.038779
+tput: 887.326465
+tput: 1049.648376
+tput: 884.071621
+tput: 883.741134
+tput: 883.566876
+tput: 891.216406
+tput: 972.814725
+tput: 882.653811
+tput: 889.844696
+tput: 985.302319
+tput: 965.197667
+tput: 876.178470
+tput: 983.001283
+tput: 881.486964
+tput: 965.860103
+tput: 947.371145
+tput: 980.906346
+tput: 876.702645
+tput: 886.581984
+tput: 873.320646
+tput: 874.965893
+tput: 872.083054
+tput: 957.039530
+tput: 1135.156319
+tput: 949.907988
+tput: 1148.631447
+tput: 1046.955768
+tput: 1033.542374
+tput: 875.587831
+tput: 877.693220
+tput: 1083.895398
+tput: 1017.810020
+tput: 956.240197
+tput: 875.313204
+tput: 865.830016
+tput: 1400.370874
+tput: 872.576622
+tput: 865.553649
+tput: 1462.021681
+tput: 1060.911406
