@@ -37,7 +37,7 @@ typedef unique_ptr<GuruServer::Stub> GuruStub;
 // *************************** Volatile Variables *****************************
 int brokerId = -1;
 string brokerAddr;
-string message;
+string message="";
 int retry = 5;
 shared_mutex mutex_brokerId; 
 
@@ -162,7 +162,7 @@ int main(int argc, char* argv[]) {
   bool newTopicReq = false;
 
   // Get command line args
-  while ((c = getopt(argc, argv, "t:b:l:n:")) != -1) {
+  while ((c = getopt(argc, argv, "t:b:l:n:m:")) != -1) {
     switch (c){
       case 't':
         topicId = stoi(optarg);
@@ -182,6 +182,10 @@ int main(int argc, char* argv[]) {
         topicId = stoi(optarg);
         printf("Adding new topic: %d\n", topicId);
         newTopicReq = true;
+        break;
+      case 'm':
+        message = string(optarg);
+        printf("Messaage: %s\n", message.c_str());
         break;
       default:
         cout << "Invalid arg" << endl;
@@ -206,7 +210,8 @@ int main(int argc, char* argv[]) {
   }
 
   
-  message = gen_random(msgLength);
+  if(message.size()==0)
+    message = gen_random(msgLength);
   int published = publishClient->PublishMessage(topicId, message);
   while(published != 0 && retry > 0){
     printf("Retrying!\n");

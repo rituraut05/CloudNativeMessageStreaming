@@ -757,6 +757,7 @@ class BrokerGrpcServer final : public BrokerServer::Service {
 
             for(int i = index; i<messageQ[topicId].size(); i++){
               reply.set_message(messageQ[topicId][i]);
+              reply.set_readind(i);
               writer->Write(reply);
             }
 

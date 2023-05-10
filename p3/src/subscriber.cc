@@ -117,18 +117,21 @@ int Subscriber::ReadMessageStream(int topicId, int index)
   std::unique_ptr<ClientReader<ReadMessageResponse> > reader(
             this->brokerstub_->ReadMessageStream(&context, request));
 
+  int readInd = 0;
   while (reader->Read(&response)) {
-      printf("Message: %s\n", response.message().c_str());
+      printf("Message: %s %d\n", response.message().c_str(), response.readind());
+      readInd = response.readind();
   }
+  printf("Read till %d index\n", readInd);
   status = reader->Finish();
   if(status.ok()){
     printf("[ReadMessageStream] Read message!\n");
-    return 0;
+    return readInd;
   } else {
     printf("[ReadMessageStream] Unable to reach broker for this topic, please retry.\n");
     return -1;
   }
-  return 0;
+  return readInd;
 }
 
 int main(int argc, char* argv[]) {
@@ -169,6 +172,5 @@ int main(int argc, char* argv[]) {
   assert(getBroker == 0);
 
   int read = subClient->ReadMessageStream(topicId, index);
-  if(read != -1) return -1;
-  return 0;
+  return read;
 }

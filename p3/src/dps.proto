@@ -68,7 +68,8 @@ message ReadMessageRequest {
   uint32 topicId = 2;
  }
 message ReadMessageResponse {
-  string message = 1;  
+  string message = 1; 
+  uint32 readind = 2; 
  }
 message PublishMessageRequest {
   uint32 topicId = 1;
