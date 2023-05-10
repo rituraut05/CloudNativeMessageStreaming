@@ -7,7 +7,7 @@
 #include <grpcpp/grpcpp.h>
 #include "dps.grpc.pb.h"
 
-#define GURU_ADDRESS "0.0.0.0:50050"
+#define GURU_ADDRESS "c220g1-030804:50050"
 
 #define TOPICS_PER_CLUSTER_THRESHOLD 3
 
@@ -25,7 +25,7 @@ using grpc::Channel;
 using dps::BrokerServer;
 
 string C_ADDRESSES[][3] = {
-  {"0.0.0.0:50051", "0.0.0.0:50052", "0.0.0.0:50053"},
+  {"c220g1-030829:50051", "c220g1-030809:50052", "c220g1-030815:50053"},
   {"0.0.0.0:50054", "0.0.0.0:50055", "0.0.0.0:50056"},
   {"0.0.0.0:50057", "0.0.0.0:50058", "0.0.0.0:50059"},
   {"0.0.0.0:50060", "0.0.0.0:50061", "0.0.0.0:50062"},
