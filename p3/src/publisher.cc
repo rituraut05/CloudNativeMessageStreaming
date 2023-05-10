@@ -112,16 +112,19 @@ int Publisher::GetBrokerForWrite(int topicId){
 }
 
 int Publisher::PublishMessage(int topicId, string message){
+  printf("[PublishMessage] Entering!\n");
   PublishMessageRequest request;
   PublishMessageResponse response;
   Status status;
   ClientContext context;
 
+  request.Clear();
   request.set_topicid(topicId);
   request.set_message(message);
   response.Clear();
 
   status = this->brokerstub_->PublishMessage(&context, request, &response);
+  printf("[PublishMessage]requested\n");
 
   if(status.ok()){
     if(response.db_errno() == EPERM){
@@ -196,13 +199,17 @@ int main(int argc, char* argv[]) {
     return -1;
   } else if(brokerId < 0){
     int addTopicRet = publishClient->AddTopic(topicId);
+    int getBroker = publishClient->GetBrokerForWrite(topicId);
+    assert(getBroker == 0);
+  } else {
+    publishClient->brokerstub_ = BrokerServer::NewStub(grpc::CreateChannel(C_ADDRESSES[0][brokerId], grpc::InsecureChannelCredentials()));
   }
 
-  int getBroker = publishClient->GetBrokerForWrite(topicId);
-  assert(getBroker == 0);
+  
   message = gen_random(msgLength);
   int published = publishClient->PublishMessage(topicId, message);
   while(published != 0 && retry > 0){
+    printf("Retrying!\n");
     published = publishClient->PublishMessage(topicId, message);
     retry--;
   }

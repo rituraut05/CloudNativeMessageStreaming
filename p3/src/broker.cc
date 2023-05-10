@@ -110,11 +110,7 @@ void checkAndUpdateCommitIndex() {
       unordered_map<int, int> currTermLocal(currentTerm);
       mutex_ct.unlock();
       for(int N = lliLocal; N>commitIndexLocal[topicId]; N--) {
-        auto NLogIndexIt = logs[topicId].end();
-        for(; NLogIndexIt != logs[topicId].begin(); NLogIndexIt--) {
-          if(NLogIndexIt->index == N) break;
-        }
-        if(greaterThanMajority(matchIndexLocal, N) && NLogIndexIt->term == currTermLocal[topicId]) {
+        if(greaterThanMajority(matchIndexLocal, N) && logs[topicId][N].term == currTermLocal[topicId]) {
           printf("[checkAndUpdateCommitIndex] LEADER: Commiting index = %d\n", N);
           mutex_ci.lock();
           commitIndex[topicId] = N;
@@ -852,6 +848,7 @@ class BrokerGrpcServer final : public BrokerServer::Service {
     if(currStateMap[topicId] != LEADER){
       printf("[PublishMessage] I am not the LEADER. Contact GURU! \n");
       resp->set_db_errno(EPERM);
+      mutex_cs.unlock();
       return Status::OK;
     }
     mutex_cs.unlock();
@@ -875,9 +872,6 @@ class BrokerGrpcServer final : public BrokerServer::Service {
     mutex_lli.lock();
     lastLogIndex[topicId]++;
     mutex_lli.unlock();
-
-    // printf("[PublishMessage] LLI: %d\n", lli);
-    // printf("[PublishMessage] LLI: %d\n", lastLogIndex[topicId]);
     // leveldb::Status logstatus = plogs->Put(leveldb::WriteOptions(), to_string(logEntry.index), logEntry.toString());
     while(true) {
       mutex_ci.lock();
