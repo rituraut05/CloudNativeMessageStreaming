@@ -116,7 +116,7 @@ int addTopic(uint topicid) {
   mutex_tlm.lock();
   topicToLeaderMap[topicid] = -1;
   mutex_tlm.unlock();
-  waitForElectionTimers[topicid] = Timer(1, WAIT_FOR_LEADER_TIMEOUT);
+  waitForElectionTimers[topicid] = Timer(1, 2);
   return 0; // success
 }
 
