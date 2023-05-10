@@ -19,8 +19,8 @@ if args.brokerId:
     print("rBroker Id for publisher: % s" % args.brokerId)
 
 def main():
-    print(args.topicId)
-    print(args.brokerId)
+    # print(args.topicId)
+    # print(args.brokerId)
     FNULL = open(os.devnull, 'w')
     
 
@@ -28,22 +28,23 @@ def main():
     count = 0
     throughput = []
     brokerId = args.brokerId
-    for i in range(10000):
+    for i in range(10):
         cmd = ["./build/publisher", "-t", str(args.topicId), "-b", str(brokerId), "-l 8"]
         p = run(cmd, stdout=FNULL, stderr=FNULL)
         if(p.returncode == 255 or p.returncode == -1):
             print(f'{i} returncode: {p.returncode}')
         else: 
             brokerId = p.returncode
+            # print(f'{i} brokerId: {brokerId}')
         
         t_s = time.perf_counter_ns()
         if(t_s - t > 200000000 ):
             tput = (i-count)*1e9/(t_s-t)
-            print(tput)
+            # print(tput)
             throughput.append(tput)
             t=time.perf_counter_ns()
             count=i
-    print(throughput)
+    # print(throughput)
 
 if __name__ == "__main__":
     main()

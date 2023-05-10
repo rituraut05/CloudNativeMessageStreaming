@@ -35,7 +35,7 @@ typedef unique_ptr<BrokerServer::Stub> BrokerStub;
 typedef unique_ptr<GuruServer::Stub> GuruStub;
 
 // *************************** Volatile Variables *****************************
-uint brokerId = 0;
+int brokerId = -1;
 string brokerAddr;
 string message;
 int retry = 5;
@@ -194,34 +194,18 @@ int main(int argc, char* argv[]) {
   } else if(topicId == -1){
     printf("TopicID is a required argument! Add using -t <topicId>\n");
     return -1;
+  } else if(brokerId < 0){
+    int addTopicRet = publishClient->AddTopic(topicId);
   }
 
-  //getBrokerForWrite(topicId)
-  // publishClient = new Publisher(grpc::CreateChannel(GURU_ADDRESS, grpc::InsecureChannelCredentials()));
-
-  // if(brokerId > 2){
-  //   int getBroker = publishClient->GetBrokerForWrite(topicId);
-  //   assert(getBroker == 0);
-  // } else {
-  //   publishClient->brokerstub_ = BrokerServer::NewStub(grpc::CreateChannel(C_ADDRESSES[][brokerId], grpc::InsecureChannelCredentials()));
-  // }
-
-  //addtopic, get leader
-  int addTopicRet = publishClient->AddTopic(topicId);
-   
   int getBroker = publishClient->GetBrokerForWrite(topicId);
   assert(getBroker == 0);
-
   message = gen_random(msgLength);
-  cout<<message<<endl;
   int published = publishClient->PublishMessage(topicId, message);
   while(published != 0 && retry > 0){
     published = publishClient->PublishMessage(topicId, message);
     retry--;
   }
-  mutex_brokerId.lock();
-  printf("BrokerID: %d", brokerId);
-  mutex_brokerId.unlock();
-  // if(published == -1) return -1;
+
   return brokerId;
 }
