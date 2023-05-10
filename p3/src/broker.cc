@@ -450,6 +450,10 @@ int BrokerClient::RequestVote(int lastLogTerm, int candLastLogIndex, int followe
   request.set_lastlogindex(candLastLogIndex);
   request.set_topicid(topicID);
 
+  mutex_tul.lock();
+  request.set_tcount(topicsUnderLeadership.size());
+  mutex_tul.unlock();
+
   reply.Clear();
 
   status = stub_->RequestVote(&context, request, &reply);
@@ -672,19 +676,25 @@ class BrokerGrpcServer final : public BrokerServer::Service {
         int voter_lli = -1;
         int voter_llt = 0;
         mutex_logs.lock();
+
+        int tpcsCnt = req->tcount();
+        mutex_tul.lock();
+        int voter_tpcsCnt = topicsUnderLeadership.size();
+        mutex_tul.unlock();
+
         if(logs[topicID].size()>0){
           voter_lli = logs[topicID].back().index;
           voter_llt = logs[topicID].back().term;
         }
         mutex_logs.unlock();
 
-        if(llt > voter_llt || (llt == voter_llt && lli >= voter_lli)) { // candidate has longer log than voter or ..
+        if((llt > voter_llt || (llt == voter_llt && lli >= voter_lli)) && (tpcsCnt <= voter_tpcsCnt)) { // candidate has longer log than voter or ..
           resp->set_term(ctLocal); 
           resp->set_votegranted(true);
           beginElectionTimer[topicID].set_running(false);
           // electionTimer.reset(getRandomTimeout());
-          printf("llt = %d \nvoter_llt = %d \nlli = %d \nvoter_lli = %d\n", llt, voter_llt, lli, voter_lli);
-          printf("VOTED!: Candidate has longer log than me\n");
+          printf("llt = %d \nvoter_llt = %d \nlli = %d \nvoter_lli = %d\n tpcsCnt = %d\n voter_tpcsCnt = %d\n", llt, voter_llt, lli, voter_lli, tpcsCnt, voter_tpcsCnt);
+          printf("VOTED!: Candidate has longer log than me and lesser topics than me\n");
 
           mutex_ct.lock();
           currentTerm[topicID] = term;

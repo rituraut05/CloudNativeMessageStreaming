@@ -56,6 +56,7 @@ message RequestVoteRequest {
   uint32 lastLogTerm = 3;
   uint32 lastLogIndex = 4;
   uint32 topicId = 5;
+  uint32 tcount = 6;
 }
 message RequestVoteResponse { 
   uint32 term = 1;
